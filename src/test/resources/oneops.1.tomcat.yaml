@@ -1,0 +1,31 @@
+---
+platforms:
+  oo-tomcat:
+    pack: oneops/tomcat:1
+    major_version: '1'
+    components:
+      tomcat/oneops.1.Tomcat:
+        tomcat:
+          mirrors: []
+          autodeploy_enabled: 'true'
+      user/oneops.1.User:
+        user-app:
+          home_directory_mode: '755'
+          home_directory: /app
+          ulimit: '16384'
+          login_shell: /bin/bash
+          username: app
+      artifact/oneops.1.Artifact:
+        artifact-1:
+          install_dir: /app/jpetstore
+          restart: execute "ln -s /opt/apache-tomcat-7.0.62/webapps/jpetstoreapp /app/jpetstore/current"
+          as_group: app
+          repository: pangaea_releases
+          version: 6.0.2
+          url: $OO_CLOUD{nexus}
+          path: /nexus
+          password: '::ENCRYPTED::'
+          as_user: app
+          checksum: ''
+          location: org.mybatis:jpetstore:war
+          migrate: ''
