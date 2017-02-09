@@ -8,9 +8,9 @@ This library provides java client for OneOps APIs across all types of resources.
 - Monitor
 - Operation
 
-Example code for sample routines are present in [`test`](https://gecgithub01.walmart.com/oneops/OneOpsAPIClient/tree/master/src/test/java/com/oneops/api/util) package
+Example code for sample routines are present in [`test`](src/test/java/com/oneops/api/util) package
 
-Routine for App life cycle is added in [`PackLifeCycleTests.java`](https://gecgithub01.walmart.com/oneops/OneOpsAPIClient/blob/master/src/test/java/com/oneops/api/util/PackLifeCycleTests.java) with steps involving
+Routine for App life cycle is added in [`PackLifeCycleTests.java`](src/test/java/com/oneops/api/util/PackLifeCycleTests.java) with steps involving
 - create assembly
 - create platform with or without yaml
 - create environment
