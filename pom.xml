@@ -54,36 +54,6 @@
 			<version>1.3.2</version>
 		</dependency>
 	</dependencies>
-	<distributionManagement>
-		<repository>
-			<id>pangaea_releases</id>
-			<url>http://gec-maven-nexus.walmart.com/nexus/content/repositories/pangaea_releases</url>
-			<uniqueVersion>true</uniqueVersion>
-		</repository>
-		<snapshotRepository>
-			<id>pangaea_snapshots</id>
-			<url>http://gec-maven-nexus.walmart.com/nexus/content/repositories/pangaea_snapshots</url>
-			<uniqueVersion>false</uniqueVersion>
-		</snapshotRepository>
-	</distributionManagement>
-	<scm>
-		<connection>scm:git:git@gecgithub01.walmart.com:platform/platform-archetypes.git</connection>
-		<developerConnection>scm:git:git@gecgithub01.walmart.com:platform/platform-archetypes.git</developerConnection>
-		<url>scm:git:git@gecgithub01.walmart.com:platform/platform-archetypes.git</url>
-		<tag>HEAD</tag>
-	</scm>
-	<pluginRepositories>
-		<pluginRepository>
-			<id>nexus_plugin_release</id>
-			<url>http://gec-maven-nexus.walmart.com/nexus/content/groups/public/</url>
-			<releases>
-				<enabled>true</enabled>
-			</releases>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</pluginRepository>
-	</pluginRepositories>
 
 	<build>
 		<plugins>
