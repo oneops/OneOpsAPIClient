@@ -22,7 +22,7 @@ Routine for App life cycle is added in [`PackLifeCycleTests.java`](https://gecgi
 - delete assembly
 
 Example code to commit and deploy
-```
+```java
 OOInstance instance = new OOInstance();
 instance.setAuthtoken("myToken");
 instance.setOrgname("myOrg");
@@ -56,7 +56,7 @@ waitForActiveDeployment(instance, assembly, environment, deploymentId);
 ```
 
 Example code to poll deployment state until it reaches end state
-```
+```java
 OOInstance instance = new OOInstance();
 instance.setAuthtoken("myToken");
 instance.setOrgname("myOrg");
@@ -75,7 +75,7 @@ while("active".equals(deploymentState)) {
 ```
 
 Example code to update variable value in Transition
-```
+```java
 OOInstance instance = new OOInstance();
 instance.setAuthtoken("myToken");
 instance.setOrgname("myOrg");
