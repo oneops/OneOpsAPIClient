@@ -137,18 +137,22 @@ public class TestCaseCommons {
 	void deploy(OOInstance instance, String assemblyName, String envName) throws OneOpsClientAPIException {
 		Transition transition = new Transition(instance, assemblyName);
 		String deploymentComment = "initiated deployment";
+		Release latestRelease = transition.getLatestRelease(envName);
 		
-		transition.commitEnvironment(envName, null, deploymentComment);
-		Release bomRelease = transition.getBomRelease(envName);
-		if(bomRelease != null) {
-			//deploy
-			Deployment deploy = transition.deploy(envName, instance.getComment());
-			Long deploymentId = deploy.getDeploymentId();
-			Long releaseId = deploy.getReleaseId();
-			transition.getDeploymentStatus(envName, deploymentId);
-			System.out.println(deploymentComment);
-			waitForActiveDeployment(instance, assemblyName, envName, deploymentId, releaseId);
-		}
+		if("open".equalsIgnoreCase(latestRelease.getReleaseState())) {
+             transition.commitEnvironment(envName, null, deploymentComment);
+        } else {
+			Release bomRelease = transition.getBomRelease(envName);
+			if(bomRelease != null) {
+				//deploy
+				Deployment deploy = transition.deploy(envName, instance.getComment());
+				Long deploymentId = deploy.getDeploymentId();
+				Long releaseId = deploy.getReleaseId();
+				transition.getDeploymentStatus(envName, deploymentId);
+				System.out.println(deploymentComment);
+				waitForActiveDeployment(instance, assemblyName, envName, deploymentId, releaseId);
+			}
+        }
 	}
 	
 	public void teardownEnv(OOInstance instance, String assemblyName, boolean force) throws OneOpsClientAPIException {

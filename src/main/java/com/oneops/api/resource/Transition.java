@@ -239,44 +239,36 @@ public class Transition extends APIClient {
 		
 		RequestSpecification request = createRequest();
 		
-		Response response = request.get(transitionEnvUri + environmentName + IConstants.RELEASES_URI + "bom");
-		if(response != null) {
-			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
-				Long releaseId = response.getBody().jsonPath().get("releaseId");
-				String nsPath = response.getBody().jsonPath().get("nsPath");
-				if(releaseId != null && nsPath!= null) {
-					Map<String ,String> properties= new HashMap<String ,String>();
-					properties.put("nsPath", nsPath);
-					properties.put("releaseId", releaseId + "");
-					if(comments != null) {
-						properties.put("comments", comments);
-					}
-					ResourceObject ro = new ResourceObject();
-					ro.setProperties(properties);
-					JSONObject jsonObject = JsonUtil.createJsonObject(ro , "cms_deployment");
-					response = request.body(jsonObject.toString()).post(transitionEnvUri + environmentName + "/deployments/");
-					if(response == null) {
-						String msg = String.format("Failed to start deployment for environment %s due to null response" , environmentName);
-						throw new OneOpsClientAPIException(msg);
-					}
-					if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
-						return response.getBody().as(Deployment.class);
-					} else {
-						String msg = String.format("Failed to start deployment for environment %s due to null response" , environmentName);
-						throw new OneOpsClientAPIException(msg);
-					}
-				} else {
-					String msg = String.format("Failed to find release id to be deployed");
-					throw new OneOpsClientAPIException(msg);
-				}
-				
-			} else {
-				String msg = String.format("Failed to start deployment for environment %s due to %s", environmentName, response.getStatusLine());
+		 Release bomRelease = getBomRelease(environmentName);
+		 Long releaseId = bomRelease.getReleaseId();
+		 String nsPath = bomRelease.getNsPath();
+		 if(releaseId != null && nsPath!= null) {
+			Map<String ,String> properties= new HashMap<String ,String>();
+			properties.put("nsPath", nsPath);
+			properties.put("releaseId", releaseId + "");
+			if(comments != null) {
+				properties.put("comments", comments);
+			}
+			ResourceObject ro = new ResourceObject();
+			ro.setProperties(properties);
+			JSONObject jsonObject = JsonUtil.createJsonObject(ro , "cms_deployment");
+			Response response = request.body(jsonObject.toString()).post(transitionEnvUri + environmentName + "/deployments/");
+			if(response == null) {
+				String msg = String.format("Failed to start deployment for environment %s due to null response" , environmentName);
 				throw new OneOpsClientAPIException(msg);
 			}
-		} 
-		String msg = String.format("Failed to get latest deployment details for environment %s due to null response" , environmentName);
-		throw new OneOpsClientAPIException(msg);
+			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+				return response.getBody().as(Deployment.class);
+			} else {
+				String msg = String.format("Failed to start deployment for environment %s due to null response" , environmentName);
+				throw new OneOpsClientAPIException(msg);
+			}
+		} else {
+			String msg = String.format("Failed to find release id to be deployed");
+			throw new OneOpsClientAPIException(msg);
+		}
+				
+			
 	}
 	
 	
