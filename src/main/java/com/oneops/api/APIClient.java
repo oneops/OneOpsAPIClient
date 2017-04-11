@@ -37,7 +37,7 @@ public abstract class APIClient {
 		}
 		rs.baseUri(baseUri);
 		rs.config(RestAssured.config().sslConfig(
-				new SSLConfig().allowAllHostnames()));
+				new SSLConfig().relaxedHTTPSValidation()));
 		return rs;
 	}
 	

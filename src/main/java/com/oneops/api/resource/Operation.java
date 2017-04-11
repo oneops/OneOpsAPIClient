@@ -365,7 +365,7 @@ public class Operation extends APIClient {
 	 * @return
 	 * @throws OneOpsClientAPIException
 	 */
-	public Procedure executeAction(String platformName, String componentName, String actionName, List<Long> instanceList, String arglist) throws OneOpsClientAPIException {
+	public Procedure executeAction(String platformName, String componentName, String actionName, List<Long> instanceList, String arglist, int rollingPercent) throws OneOpsClientAPIException {
 		if(platformName == null || platformName.length() == 0) {
 			String msg = "Missing platform name to fetch details";
 			throw new OneOpsClientAPIException(msg);

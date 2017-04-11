@@ -13,17 +13,30 @@ public class TestContext {
 	private Map<String, CLOUD_PRIORITY> cloudMap;
 	
 	public enum CLOUD_PRIORITY {
-		PRIMARY(1),
-		SECONDARY(2);
+		PRIMARY(1, 1, 100),
+		SECONDARY(2, 1, 100);
 		
 		private int priorityValue;
-		CLOUD_PRIORITY(int val) {
-			priorityValue = val;
+		private int deployOrder;
+		private int scalePercent;
+		CLOUD_PRIORITY(int priority, int order, int scale) {
+			priorityValue = priority;
+			deployOrder = order;
+			scalePercent = scale;
 		}
 		
 		public int getPriorityValue() {
 			return this.priorityValue;
 		}
+
+		public int getDeployOrder() {
+			return deployOrder;
+		}
+
+		public int getScalePercent() {
+			return scalePercent;
+		}
+		
 	}
 	
 	public String getAssemblyName() {

@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.json.JSONObject;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -411,7 +410,8 @@ public class Design extends APIClient {
 			Map<String, String> attr = Maps.newHashMap();
 			if(ciAttributes != null && ciAttributes.getAdditionalProperties() != null && ciAttributes.getAdditionalProperties().size() > 0) {
 				for(Entry<String, Object> entry : ciAttributes.getAdditionalProperties().entrySet()) {
-					attr.put(entry.getKey(), String.valueOf(entry.getValue()));
+					if(entry.getValue() != null)
+						attr.put(entry.getKey(), String.valueOf(entry.getValue()));
 				}
 			}
 			
@@ -447,6 +447,184 @@ public class Design extends APIClient {
 			} 
 		}
 		String msg = String.format("Failed to get update component %s due to null response", componentName);
+		throw new OneOpsClientAPIException(msg);
+	}
+	
+	/**
+	 * Deletes the given platform component
+	 * 
+	 * @param platformName
+	 * @param componentName
+	 * @return
+	 * @throws OneOpsClientAPIException
+	 */
+	public CiResource deletePlatformComponent(String platformName, String componentName) throws OneOpsClientAPIException {
+		if(platformName == null || platformName.length() == 0) {
+			String msg = "Missing platform name to delete component";
+			throw new OneOpsClientAPIException(msg);
+		}
+		if(componentName == null || componentName.length() == 0) {
+			String msg = "Missing component name to delete it";
+			throw new OneOpsClientAPIException(msg);
+		}
+		
+		RequestSpecification request = createRequest();
+		Response response = request.delete(designURI + IConstants.PLATFORM_URI + platformName + IConstants.COMPONENT_URI + componentName);
+		if(response != null) {
+			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+				return response.getBody().as(CiResource.class);
+			} else {
+				String msg = String.format("Failed to delete platform with name %s due to %s", platformName, response.getStatusLine());
+				throw new OneOpsClientAPIException(msg);
+			}
+		} 
+		String msg = String.format("Failed to delete platform with name %s due to null response", platformName);
+		throw new OneOpsClientAPIException(msg);
+	}
+	
+	/**
+	 * List attachments for a given assembly/design/platform/component
+	 * 
+	 * @param platformName
+	 * @return
+	 * @throws OneOpsClientAPIException
+	 */
+	public List<CiResource> listPlatformComponentAttachments(String platformName, String componentName) throws OneOpsClientAPIException {
+		if(platformName == null || platformName.length() == 0) {
+			String msg = "Missing platform name to list platform attachments";
+			throw new OneOpsClientAPIException(msg);
+		}
+		RequestSpecification request = createRequest();
+		Response response = request.get(designURI + IConstants.PLATFORM_URI + platformName + IConstants.COMPONENT_URI + componentName + IConstants.ATTACHMENTS_URI);
+		if(response != null) {
+			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+				return JsonUtil.toObject(response.getBody().asString(), new TypeReference<List<CiResource>>(){});
+			} else {
+				String msg = String.format("Failed to get list of design platforms attachments due to %s", response.getStatusLine());
+				throw new OneOpsClientAPIException(msg);
+			}
+		} 
+		String msg = "Failed to get list of design platforms attachments due to null response";
+		throw new OneOpsClientAPIException(msg);
+	}
+	
+	/**
+	 * Get platform component attachment details 
+	 * 
+	 * @param platformName
+	 * @param componentName
+	 * @return
+	 * @throws OneOpsClientAPIException
+	 */
+	public CiResource getPlatformComponentAttachment(String platformName, String componentName, String attachmentName) throws OneOpsClientAPIException {
+		if(platformName == null || platformName.length() == 0) {
+			String msg = "Missing platform name to get platform component attachment details";
+			throw new OneOpsClientAPIException(msg);
+		}
+		if(componentName == null || componentName.length() == 0) {
+			String msg = "Missing component name to get platform component attachment details";
+			throw new OneOpsClientAPIException(msg);
+		}
+		RequestSpecification request = createRequest();
+		Response response = request.get(designURI + IConstants.PLATFORM_URI + platformName + IConstants.COMPONENT_URI + componentName + IConstants.ATTACHMENTS_URI + attachmentName);
+		if(response != null) {
+			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+				return response.getBody().as(CiResource.class);
+			} else {
+				String msg = String.format("Failed to get platform component attachment details due to %s", response.getStatusLine());
+				throw new OneOpsClientAPIException(msg);
+			}
+		} 
+		String msg = "Failed to get platform component attachment details due to null response";
+		throw new OneOpsClientAPIException(msg);
+	}
+	
+	/**
+	 * Update attachment
+	 * 
+	 * @param platformName
+	 * @param componentName
+	 * @param attachmentName
+	 * @param attributes
+	 * 
+	 *  Sample request for new attachment attributes
+	 * 	attributes.put("content", "content");
+		attributes.put("source", "source");
+		attributes.put("path", "/tmp/my.sh");
+		attributes.put("exec_cmd", "exec_cmd");
+		attributes.put("run_on", "after-add,after-replace,after-update");
+		attributes.put("run_on_action", "[\"after-restart\"]");
+		
+	 * @return
+	 * @throws OneOpsClientAPIException
+	 */
+	public CiResource updatePlatformComponentAttachment(String platformName, String componentName, String attachmentName, Map<String, String> attributes) throws OneOpsClientAPIException {
+		if(platformName == null || platformName.length() == 0) {
+			String msg = "Missing platform name to update attachment attributes";
+			throw new OneOpsClientAPIException(msg);
+		}
+		if(componentName == null || componentName.length() == 0) {
+			String msg = "Missing component name to update attachment attributes";
+			throw new OneOpsClientAPIException(msg);
+		}
+		if(attachmentName == null || attachmentName.length() == 0) {
+			String msg = "Missing attachment name to update attachment attributes";
+			throw new OneOpsClientAPIException(msg);
+		}
+		if(attributes == null || attributes.size() == 0) {
+			//nothing to be updated
+			return null;
+		}
+		
+		CiResource attachmentDetails = getPlatformComponentAttachment(platformName, componentName, attachmentName);
+		if(attachmentDetails != null) {
+			ResourceObject ro = new ResourceObject();
+			
+			Long ciId = attachmentDetails.getCiId();
+			RequestSpecification request = createRequest();
+			
+			//Add existing ciAttributes 
+			CiAttributes ciAttributes = attachmentDetails.getCiAttributes();
+			Map<String, String> attr = Maps.newHashMap();
+			if(ciAttributes != null && ciAttributes.getAdditionalProperties() != null && ciAttributes.getAdditionalProperties().size() > 0) {
+				for(Entry<String, Object> entry : ciAttributes.getAdditionalProperties().entrySet()) {
+					attr.put(entry.getKey(), String.valueOf(entry.getValue()));
+				}
+			}
+			
+			//Add ciAttributes to be updated
+			if(attributes != null && attributes.size() > 0)
+				attr.putAll(attributes);
+			
+			Map<String, String> ownerProps = Maps.newHashMap();
+			//Add existing attrProps to retain locking of attributes 
+			AttrProps attrProps = attachmentDetails.getAttrProps();
+			if(attrProps != null && attrProps.getAdditionalProperties() != null && attrProps.getAdditionalProperties().size() > 0) {
+				for(Entry<String, Object> entry : attrProps.getAdditionalProperties().entrySet()) {
+					ownerProps.put(entry.getKey(), String.valueOf(entry.getValue()));
+				}
+			}
+			
+			//Add updated attributes to attrProps to lock them
+			for(Entry<String, String> entry :  attributes.entrySet()) {
+				ownerProps.put(entry.getKey(), "design");
+			}
+			
+			ro.setOwnerProps(ownerProps);
+			ro.setAttributes(attr);
+			JSONObject jsonObject = JsonUtil.createJsonObject(ro , "cms_dj_ci");
+ 			Response response = request.body(jsonObject.toString()).put(designURI + IConstants.PLATFORM_URI + platformName 
+ 					+ IConstants.COMPONENT_URI + componentName + IConstants.ATTACHMENTS_URI + ciId);
+			if(response != null) {
+				if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+					return response.getBody().as(CiResource.class);
+				} else {
+					String msg = String.format("Failed to get update attachment %s due to %s", componentName, response.getStatusLine());
+					throw new OneOpsClientAPIException(msg);
+				}
+			} 
+		}
+		String msg = String.format("Failed to get update attachment %s due to null response", componentName);
 		throw new OneOpsClientAPIException(msg);
 	}
 	
@@ -683,7 +861,71 @@ public class Design extends APIClient {
 		return success;
 	}
 	
+	/**
+	 * Update platform local variables for a given assembly/design/platform
+	 * 
+	 * @param platformName
+	 * @param variables
+	 * @return
+	 * @throws OneOpsClientAPIException
+	 */
+	public Boolean updateOrAddPlatformVariables(String platformName, String variableName, String variableValue, boolean isSecure) throws OneOpsClientAPIException {
+		if(platformName == null || platformName.length() == 0) {
+			String msg = "Missing platform name to update variables";
+			throw new OneOpsClientAPIException(msg);
+		}
+		if(variableName == null ) {
+			String msg = "Missing variable name to be added";
+			throw new OneOpsClientAPIException(msg);
+		}
+		
+		if(variableValue == null ) {
+			String msg = "Missing variable value to be added";
+			throw new OneOpsClientAPIException(msg);
+		}
+		
+		RequestSpecification request = createRequest();
+			
+		Response variable = request.get(designURI + IConstants.PLATFORM_URI + platformName + IConstants.VARIABLES_URI + variableName);
+		if(variable == null || variable.getBody() == null) {
+			return addPlatformVariable(platformName, variableName, variableValue, isSecure) == null ? false : true;
+		} else {
+			return updatePlatformVariable(platformName, variableName, variableValue, isSecure) == null ? false : true;
+		}
+	}
 	
+	/**
+	 * Deletes the given platform variable
+	 * 
+	 * @param platformName
+	 * @param variableName
+	 * @return
+	 * @throws OneOpsClientAPIException
+	 */
+	
+	public CiResource deletePlatformVariable(String platformName, String variableName) throws OneOpsClientAPIException {
+		if(platformName == null || platformName.length() == 0) {
+			String msg = "Missing platform name to delete variable";
+			throw new OneOpsClientAPIException(msg);
+		}
+		if(variableName == null || variableName.length() == 0) {
+			String msg = "Missing variable name to delete it";
+			throw new OneOpsClientAPIException(msg);
+		}
+		
+		RequestSpecification request = createRequest();
+		Response response = request.delete(designURI + IConstants.PLATFORM_URI + platformName + IConstants.VARIABLES_URI + variableName);
+		if(response != null) {
+			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+				return response.getBody().as(CiResource.class);
+			} else {
+				String msg = String.format("Failed to delete platform with name %s due to %s", platformName, response.getStatusLine());
+				throw new OneOpsClientAPIException(msg);
+			}
+		} 
+		String msg = String.format("Failed to delete platform with name %s due to null response", platformName);
+		throw new OneOpsClientAPIException(msg);
+	}
 
 	/**
 	 * List global variables for a given assembly/design

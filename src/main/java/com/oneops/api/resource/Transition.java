@@ -112,11 +112,10 @@ public class Transition extends APIClient {
 	 * @return
 	 * @throws OneOpsClientAPIException
 	 */
-	public CiResource createEnvironment(String environmentName, String envprofile, String availability, 
-			Map<String, String> platformAvailability , Map<String, String> cloudMap, boolean debugFlag, boolean gdnsFlag, String description) throws OneOpsClientAPIException {
+	public CiResource createEnvironment(String environmentName, String envprofile, String availability, Map<String ,String> attributes, 
+			Map<String, String> platformAvailability , Map<String, Map<String, String>> cloudMap, boolean gdnsFlag, String description) throws OneOpsClientAPIException {
 		
 		ResourceObject ro = new ResourceObject();
-		Map<String ,String> attributes = new HashMap<String ,String>();
 		Map<String ,String> properties= new HashMap<String ,String>();
 		
 		if(environmentName != null && environmentName.length() > 0) {
@@ -125,6 +124,10 @@ public class Transition extends APIClient {
 			String msg = "Missing environment name to create environment";
 			throw new OneOpsClientAPIException(msg);
 		}
+		if(attributes == null) {
+			attributes = Maps.newHashMap();
+		}
+		
 		properties.put("nsPath", instance.getOrgname() + "/" + assemblyName);
 		if(availability != null && availability.length() > 0) {
 			attributes.put("availability", availability);
@@ -136,7 +139,6 @@ public class Transition extends APIClient {
 		ro.setProperties(properties);
 		attributes.put("profile", envprofile);
 		attributes.put("description", description);
-		attributes.put("debug", String.valueOf(debugFlag));
 		attributes.put("global_dns", String.valueOf(gdnsFlag));
 		ro.setAttributes(attributes);
 		
@@ -1293,6 +1295,47 @@ public class Transition extends APIClient {
 			}
 		} 
 		String msg = String.format("Failed to update platforms redundancy for environment with name %s due to null response", environmentName);
+		throw new OneOpsClientAPIException(msg);
+	}
+	
+	public CiResource updatePlatformCloudScale(String environmentName, String platformName, String cloudId, Map<String, String> cloudMap) throws OneOpsClientAPIException {
+		if (environmentName == null || environmentName.length() == 0) {
+			String msg = String.format("Missing environment name to be updated");
+			throw new OneOpsClientAPIException(msg);
+		}
+
+		if (platformName == null || platformName.length() == 0) {
+			String msg = String.format("Missing platform name to be updated");
+			throw new OneOpsClientAPIException(msg);
+		}
+
+		if (cloudId == null || cloudId.length() == 0) {
+			String msg = String.format("Missing cloud ID to be updated");
+			throw new OneOpsClientAPIException(msg);
+		}
+
+		if (cloudMap == null || cloudMap.size() == 0) {
+			String msg = String.format("Missing cloud info to be updated");
+			throw new OneOpsClientAPIException(msg);
+		}
+
+		RequestSpecification request = createRequest();
+		JSONObject jo = new JSONObject();
+		jo.put("cloud_id", cloudId);
+		jo.put("attributes", cloudMap);
+		Response response = request.body(jo.toString())
+				.put(transitionEnvUri + environmentName + IConstants.PLATFORM_URI + platformName + "/cloud_configuration");
+		if (response != null) {
+			if (response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+				return response.getBody().as(CiResource.class);
+			} else {
+				String msg = String.format("Failed to update platforms cloud scale with cloud id %s due to %s", cloudId,
+						response.getStatusLine());
+				throw new OneOpsClientAPIException(msg);
+			}
+		}
+		String msg = String.format("Failed to update platforms cloud scale with cloud id %s due to null response",
+				cloudId);
 		throw new OneOpsClientAPIException(msg);
 	}
 	
