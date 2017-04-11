@@ -21,6 +21,7 @@ public class OOInstance {
 	@JsonProperty("local-vars")
 	private Map<String, String> localVars;
 	private String comment;
+	private boolean gzipEnabled = true;
 	
 	public String getName() {
 		return name;
@@ -88,4 +89,10 @@ public class OOInstance {
 	public void setComment(String comment) {
 		this.comment = comment;
 	}	
+	public boolean isGzipEnabled() {
+		return gzipEnabled;
+	}
+	public void setGzipEnabled(boolean gzipEnabled) {
+		this.gzipEnabled = gzipEnabled;
+	}
 }

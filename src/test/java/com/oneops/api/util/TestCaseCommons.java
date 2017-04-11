@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -86,7 +87,7 @@ public class TestCaseCommons {
 		Design design = new Design(instance , context.getAssemblyName());
 		
 		Map<String, String> platformAvailability = Maps.newHashMap();
-		Map<String, String> cloudMap = Maps.newHashMap();
+		Map<String, Map<String, String>> cmap = Maps.newHashMap();
 		
 		List<CiResource> ps = design.listPlatforms();
 		for (CiResource ciResource : ps) {
@@ -97,15 +98,24 @@ public class TestCaseCommons {
 		if(context.getCloudMap() != null && context.getCloudMap().size() > 0) {
 			for(Entry<String, CLOUD_PRIORITY> entry : context.getCloudMap().entrySet()) {
 				com.oneops.api.resource.model.CiResource cloudByName = cloud.getCloud(entry.getKey());
-				Long cId = cloudByName.getCiId();
-				cloudMap.put(String.valueOf(cId), String.valueOf(entry.getValue().getPriorityValue()));
+				String cId = String.valueOf(cloudByName.getCiId());
+				
+				Map<String, String> cloudMap = new HashMap<String, String>();
+		        cloudMap.put("priority", String.valueOf(entry.getValue().getPriorityValue()));
+		        cloudMap.put("dpmt_order", String.valueOf(entry.getValue().getDeployOrder()));
+		        cloudMap.put("pct_scale", String.valueOf(entry.getValue().getScalePercent()));
+		        cmap.put(cId, cloudMap);
 			}
 		} else {
 			List<com.oneops.api.resource.model.CiResource> clouds = cloud.listClouds(); //randomly select one of the available clouds
 			Random random = new Random();
 			int randomNum = random.nextInt(clouds.size());
 			
-			cloudMap.put(String.valueOf(clouds.get(randomNum).getCiId()), "1");
+			Map<String, String> cloudMap = new HashMap<String, String>();
+	        cloudMap.put("priority", "1");
+	        cloudMap.put("dpmt_order", "1");
+	        cloudMap.put("pct_scale", "100");
+	        cmap.put(String.valueOf(clouds.get(randomNum).getCiId()), cloudMap);
 		}
 		
 		String profile = null;
@@ -129,7 +139,8 @@ public class TestCaseCommons {
 			
 			System.out.println("fetched environment with latest design " + context.getEnvName());
 		} catch (Exception e) {
-			transition.createEnvironment(context.getEnvName(), profile, context.getAvailability(), platformAvailability, cloudMap, false, false, "test environment for " + context.getEnvName());
+			transition.createEnvironment(context.getEnvName(), profile, context.getAvailability(), 
+					null, platformAvailability, cmap, false, "test environment for " + context.getEnvName());
 			System.out.println("created environment " + context.getEnvName());
 		}
 	}
@@ -141,18 +152,18 @@ public class TestCaseCommons {
 		
 		if("open".equalsIgnoreCase(latestRelease.getReleaseState())) {
              transition.commitEnvironment(envName, null, deploymentComment);
-        } else {
-			Release bomRelease = transition.getBomRelease(envName);
-			if(bomRelease != null) {
-				//deploy
-				Deployment deploy = transition.deploy(envName, instance.getComment());
-				Long deploymentId = deploy.getDeploymentId();
-				Long releaseId = deploy.getReleaseId();
-				transition.getDeploymentStatus(envName, deploymentId);
-				System.out.println(deploymentComment);
-				waitForActiveDeployment(instance, assemblyName, envName, deploymentId, releaseId);
-			}
-        }
+        } 
+		Release bomRelease = transition.getBomRelease(envName);
+		if(bomRelease != null) {
+			//deploy
+			Deployment deploy = transition.deploy(envName, instance.getComment());
+			Long deploymentId = deploy.getDeploymentId();
+			Long releaseId = deploy.getReleaseId();
+			transition.getDeploymentStatus(envName, deploymentId);
+			System.out.println(deploymentComment);
+			waitForActiveDeployment(instance, assemblyName, envName, deploymentId, releaseId);
+		}
+        
 	}
 	
 	public void teardownEnv(OOInstance instance, String assemblyName, boolean force) throws OneOpsClientAPIException {
@@ -304,7 +315,7 @@ public class TestCaseCommons {
 		List<String> actions = actionList.getList("actionName");
 		for (String action : actions) {
 			System.out.println("executing action " + action + " on " + component);
-			Procedure procedureExec = operation.executeAction(platform, component, action, instances, null);
+			Procedure procedureExec = operation.executeAction(platform, component, action, instances, null, 100);
 			String state = procedureExec.getProcedureState();
 			Long procedureId = procedureExec.getProcedureId();
 			do {
