@@ -822,7 +822,7 @@ public class Design extends APIClient {
 		RequestSpecification request = createRequest();
 			
 		Response variable = request.get(designURI + IConstants.PLATFORM_URI + platformName + IConstants.VARIABLES_URI + variableName);
-		if(variable == null || variable.getBody() == null) {
+		if(variable == null || variable.getStatusCode() != 200 || variable.getBody() == null) {
 			String msg = String.format("Failed to find local variables %s for platform %s", variableName, platformName);
 			throw new OneOpsClientAPIException(msg);
 		}
@@ -887,7 +887,7 @@ public class Design extends APIClient {
 		RequestSpecification request = createRequest();
 			
 		Response variable = request.get(designURI + IConstants.PLATFORM_URI + platformName + IConstants.VARIABLES_URI + variableName);
-		if(variable == null || variable.getBody() == null) {
+		if(variable == null || variable.getStatusCode() != 200 || variable.getBody() == null) {
 			return addPlatformVariable(platformName, variableName, variableValue, isSecure) == null ? false : true;
 		} else {
 			return updatePlatformVariable(platformName, variableName, variableValue, isSecure) == null ? false : true;
