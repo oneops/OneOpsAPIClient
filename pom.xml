@@ -7,7 +7,7 @@
     <version>3</version>
   </parent>
   <artifactId>oneops-client</artifactId>
-  <version>5.0.4-SNAPSHOT</version>
+  <version>5.0.4</version>
 
   <dependencies>
     <dependency>
@@ -52,7 +52,7 @@
   <scm>
     <developerConnection>scm:git:git@github.com:oneops/oneops-api.git</developerConnection>
     <url>https://github.com/oneops/oneops-client</url>
-    <tag>HEAD</tag>
+    <tag>release-5.0.4</tag>
   </scm>
 
   <build>
