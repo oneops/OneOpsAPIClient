@@ -44,7 +44,7 @@ public class CiResource {
 	private Long nsId;
 	@JsonProperty("ciAttributes")
 	private CiAttributes ciAttributes;
-	@JsonProperty("attrProps")
+	@JsonProperty("ciAttrProps")
 	private AttrProps attrProps;
 	@JsonIgnore
 	private Map<String, Object> additionalProperties = new HashMap<String, Object>();
