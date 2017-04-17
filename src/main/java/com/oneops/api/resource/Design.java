@@ -352,7 +352,7 @@ public class Design extends APIClient {
 					ownerProps = Maps.newHashMap();
 				}
 				for(Entry<String, String> entry :  attributes.entrySet()) {
-					ownerProps.put(entry.getKey(), "");
+					ownerProps.put(entry.getKey(), "design");
 				}
 				ro.setOwnerProps(ownerProps);
 			}
@@ -422,9 +422,10 @@ public class Design extends APIClient {
 			Map<String, String> ownerProps = Maps.newHashMap();
 			//Add existing attrProps to retain locking of attributes 
 			AttrProps attrProps = componentDetails.getAttrProps();
-			if(attrProps != null && attrProps.getAdditionalProperties() != null && attrProps.getAdditionalProperties().size() > 0) {
-				for(Entry<String, Object> entry : attrProps.getAdditionalProperties().entrySet()) {
-					ownerProps.put(entry.getKey(), String.valueOf(entry.getValue()));
+			if(attrProps != null && attrProps.getAdditionalProperties() != null && attrProps.getAdditionalProperties().size() > 0 && attrProps.getAdditionalProperties().get("owner") != null) {
+				Map<String, String> ownersMap = (Map<String, String>) attrProps.getAdditionalProperties().get("owner");
+				for(Entry<String, String> entry : ownersMap.entrySet()) {
+					ownerProps.put(entry.getKey(), entry.getValue());
 				}
 			}
 			
@@ -599,9 +600,10 @@ public class Design extends APIClient {
 			Map<String, String> ownerProps = Maps.newHashMap();
 			//Add existing attrProps to retain locking of attributes 
 			AttrProps attrProps = attachmentDetails.getAttrProps();
-			if(attrProps != null && attrProps.getAdditionalProperties() != null && attrProps.getAdditionalProperties().size() > 0) {
-				for(Entry<String, Object> entry : attrProps.getAdditionalProperties().entrySet()) {
-					ownerProps.put(entry.getKey(), String.valueOf(entry.getValue()));
+			if(attrProps != null && attrProps.getAdditionalProperties() != null && attrProps.getAdditionalProperties().size() > 0 && attrProps.getAdditionalProperties().get("owner") != null) {
+				Map<String, String> ownersMap = (Map<String, String>) attrProps.getAdditionalProperties().get("owner");
+				for(Entry<String, String> entry : ownersMap.entrySet()) {
+					ownerProps.put(entry.getKey(), entry.getValue());
 				}
 			}
 			

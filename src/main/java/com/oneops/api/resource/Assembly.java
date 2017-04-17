@@ -7,7 +7,6 @@ import java.util.Map;
 import org.json.JSONObject;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.jayway.restassured.path.json.JsonPath;
 import com.jayway.restassured.response.Response;
 import com.jayway.restassured.specification.RequestSpecification;
 import com.oneops.api.APIClient;
