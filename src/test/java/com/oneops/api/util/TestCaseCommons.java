@@ -139,8 +139,10 @@ public class TestCaseCommons {
 			
 			System.out.println("fetched environment with latest design " + context.getEnvName());
 		} catch (Exception e) {
-			transition.createEnvironment(context.getEnvName(), profile, context.getAvailability(), 
-					null, platformAvailability, cmap, false, "test environment for " + context.getEnvName());
+			Map<String, String> attributes = Maps.newHashMap();
+			attributes.put("availability", context.getAvailability());
+			transition.createEnvironment(context.getEnvName(), profile, 
+					attributes , platformAvailability, cmap, "test environment for " + context.getEnvName());
 			System.out.println("created environment " + context.getEnvName());
 		}
 	}
