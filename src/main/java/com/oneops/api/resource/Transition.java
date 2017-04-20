@@ -112,8 +112,8 @@ public class Transition extends APIClient {
 	 * @return
 	 * @throws OneOpsClientAPIException
 	 */
-	public CiResource createEnvironment(String environmentName, String envprofile, String availability, Map<String ,String> attributes, 
-			Map<String, String> platformAvailability , Map<String, Map<String, String>> cloudMap, boolean gdnsFlag, String description) throws OneOpsClientAPIException {
+	public CiResource createEnvironment(String environmentName, String envprofile, Map<String ,String> attributes, 
+			Map<String, String> platformAvailability , Map<String, Map<String, String>> cloudMap, String description) throws OneOpsClientAPIException {
 		
 		ResourceObject ro = new ResourceObject();
 		Map<String ,String> properties= new HashMap<String ,String>();
@@ -125,26 +125,33 @@ public class Transition extends APIClient {
 			throw new OneOpsClientAPIException(msg);
 		}
 		if(attributes == null) {
-			attributes = Maps.newHashMap();
+			String msg = "Missing availability in attributes map to create environment";
+			throw new OneOpsClientAPIException(msg);
 		}
 		
 		properties.put("nsPath", instance.getOrgname() + "/" + assemblyName);
-		if(availability != null && availability.length() > 0) {
-			attributes.put("availability", availability);
+		
+		String availability = null;
+		if(attributes.containsKey("availability")) {
+			availability = attributes.get("availability");
 		} else {
-			String msg = "Missing availability to create environment";
+			String msg = "Missing availability in attributes map to create environment";
 			throw new OneOpsClientAPIException(msg);
+		}
+		
+		if(attributes.containsKey("global_dns")) {
+			attributes.put("global_dns", String.valueOf(attributes.get("global_dns")));
 		}
 		
 		ro.setProperties(properties);
 		attributes.put("profile", envprofile);
 		attributes.put("description", description);
-		attributes.put("global_dns", String.valueOf(gdnsFlag));
+		String subdomain = environmentName + "." + assemblyName + "." + instance.getOrgname();
+		attributes.put("subdomain", subdomain);
 		ro.setAttributes(attributes);
 		
 		RequestSpecification request = createRequest();
 		JSONObject jsonObject = JsonUtil.createJsonObject(ro , "cms_ci");
-		
 		if(platformAvailability == null || platformAvailability.size() == 0) {
 			Design design = new Design(instance, assemblyName);
 			List<CiResource> platforms = design.listPlatforms();
@@ -218,6 +225,12 @@ public class Transition extends APIClient {
 					}
 					envState = response.getBody().jsonPath().get("ciState");
 				} while(response != null && "locked".equalsIgnoreCase(envState));
+				
+				String comments = response.getBody().jsonPath().getString("comments");
+				if(comments != null && comments.startsWith("ERROR:")) {
+					String msg = String.format("Failed to commit environment due to %s",  comments);
+					throw new OneOpsClientAPIException(msg);
+				}
 				
 				return response.getBody().as(Release.class);
 				
@@ -809,15 +822,8 @@ public class Transition extends APIClient {
 			ResourceObject ro = new ResourceObject();
 			
 			Long ciId = componentDetails.getCiId();
-			//Add existing ciAttributes 
-			CiAttributes ciAttributes = componentDetails.getCiAttributes();
-			Map<String, String> attr = Maps.newHashMap();
-			if(ciAttributes != null && ciAttributes.getAdditionalProperties() != null && ciAttributes.getAdditionalProperties().size() > 0) {
-				for(Entry<String, Object> entry : ciAttributes.getAdditionalProperties().entrySet()) {
-					attr.put(entry.getKey(), String.valueOf(entry.getValue()));
-				}
-			}
 			
+			Map<String, String> attr = Maps.newHashMap();
 			//Add ciAttributes to be updated
 			if(attributes != null && attributes.size() > 0)
 				attr.putAll(attributes);
