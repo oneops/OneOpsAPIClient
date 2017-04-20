@@ -1239,7 +1239,7 @@ public class Transition extends APIClient {
 	 * @return
 	 * @throws OneOpsClientAPIException
 	 */
-	public Boolean updatePlatformRedundancyConfig(String environmentName, String platformName, RedundancyConfig config) throws OneOpsClientAPIException {
+	public Boolean updatePlatformRedundancyConfig(String environmentName, String platformName, String componentName, RedundancyConfig config) throws OneOpsClientAPIException {
 		if(environmentName == null || environmentName.length() == 0) {
 			String msg = "Missing environment name to be updated";
 			throw new OneOpsClientAPIException(msg);
@@ -1282,12 +1282,12 @@ public class Transition extends APIClient {
 		owner.put("owner", redundant);
 		
 		rconfig.put("relationAttrProps", owner);
-		
-		CiResource computeDetails = getPlatformComponent(environmentName, platformName, "compute");
-		Long computeId = computeDetails.getCiId();
-		
+		if(componentName == null || componentName.isEmpty()) {
+			componentName = "compute";
+		} 
+		CiResource componentDetails = getPlatformComponent(environmentName, platformName, componentName);
 		JSONObject jo = new JSONObject();
-		jo.put(String.valueOf(computeId), rconfig);
+		jo.put(String.valueOf(componentDetails.getCiId()), rconfig);
 		
 		JSONObject dependsOn = new JSONObject();
 		dependsOn.put("depends_on", jo);
