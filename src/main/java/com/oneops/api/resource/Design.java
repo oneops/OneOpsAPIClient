@@ -405,16 +405,7 @@ public class Design extends APIClient {
 			Long ciId = componentDetails.getCiId();
 			RequestSpecification request = createRequest();
 			
-			//Add existing ciAttributes 
-			CiAttributes ciAttributes = componentDetails.getCiAttributes();
 			Map<String, String> attr = Maps.newHashMap();
-			if(ciAttributes != null && ciAttributes.getAdditionalProperties() != null && ciAttributes.getAdditionalProperties().size() > 0) {
-				for(Entry<String, Object> entry : ciAttributes.getAdditionalProperties().entrySet()) {
-					if(entry.getValue() != null)
-						attr.put(entry.getKey(), String.valueOf(entry.getValue()));
-				}
-			}
-			
 			//Add ciAttributes to be updated
 			if(attributes != null && attributes.size() > 0)
 				attr.putAll(attributes);
