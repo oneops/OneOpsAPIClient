@@ -83,6 +83,21 @@ public class Assembly extends APIClient {
 	 * @throws OneOpsClientAPIException
 	 */
 	public CiResource createAssembly(String assemblyName, String ownerEmail, String comments, String description) throws OneOpsClientAPIException {
+		return createAssembly(assemblyName, ownerEmail, comments, description, null);
+	}
+	
+	/**
+	 * Creates assembly for the given @assemblyName
+	 * 
+	 * @param assemblyName {mandatory} 
+	 * @param ownerEmail a valid email address is {mandatory}
+	 * @param comments
+	 * @param description
+	 * @param tags
+	 * @return
+	 * @throws OneOpsClientAPIException
+	 */
+	public CiResource createAssembly(String assemblyName, String ownerEmail, String comments, String description, Map<String, String> tags) throws OneOpsClientAPIException {
 		ResourceObject ro = new ResourceObject();
 		Map<String ,String> attributes = new HashMap<String ,String>();
 		Map<String ,String> properties= new HashMap<String ,String>();
@@ -105,10 +120,16 @@ public class Assembly extends APIClient {
 		}
 		
 		attributes.put("description", description);
+		
+		if( tags != null && !tags.isEmpty() ){
+			attributes.put("tags", JSONObject.valueToString(tags));
+		}
+		
 		ro.setAttributes(attributes);
 		
 		RequestSpecification request = createRequest();
 		JSONObject jsonObject = JsonUtil.createJsonObject(ro , "cms_ci");
+
 		Response response = request.body(jsonObject.toString()).post(IConstants.ASSEMBLY_URI);
 		
 		if(response != null) {
