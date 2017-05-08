@@ -7,6 +7,8 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Strings;
@@ -32,8 +34,8 @@ import com.oneops.api.util.IConstants;
 import com.oneops.api.util.JsonUtil;
 
 public class Transition extends APIClient {
-
-//	static String RESOURCE_URI = "/transition/environments/";
+	
+	private static final Logger LOG = LoggerFactory.getLogger(Transition.class);
 	private String transitionEnvUri;
 	private OOInstance instance;
 	private String assemblyName;
@@ -492,7 +494,7 @@ public class Transition extends APIClient {
 				return response.getBody().as(Release.class);
 			} else {
 				String msg = String.format("No bom releases found for environment %s ", environmentName);
-				System.out.println(msg);
+				LOG.error(msg);
 				return null;
 			}
 		} 

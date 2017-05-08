@@ -143,7 +143,6 @@ public class Account extends APIClient {
 		Response response = request.get(IConstants.ORGANIZATION_URI + "environments");
 		if(response != null) {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
-				System.out.println(response.getBody().asString());
 				return response.getBody().jsonPath();
 			} else {
 				String msg = String.format("Failed to get list of Environment Profiles due to %s", response.getStatusLine());
