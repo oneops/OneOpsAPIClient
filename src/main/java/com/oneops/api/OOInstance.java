@@ -1,9 +1,6 @@
 package com.oneops.api;
 
-import java.util.Map;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class OOInstance {
@@ -16,10 +13,6 @@ public class OOInstance {
 	private String platform;
 	private String environment;
 	private String component;
-	@JsonProperty("global-vars")
-	private Map<String, String> globalVars;
-	@JsonProperty("local-vars")
-	private Map<String, String> localVars;
 	private String comment;
 	private boolean gzipEnabled = true;
 	
@@ -70,18 +63,6 @@ public class OOInstance {
 	}
 	public void setComponent(String component) {
 		this.component = component;
-	}
-	public Map<String, String> getGlobalVars() {
-		return globalVars;
-	}
-	public void setGlobalVars(Map<String, String> globalVars) {
-		this.globalVars = globalVars;
-	}
-	public Map<String, String> getLocalVars() {
-		return localVars;
-	}
-	public void setLocalVars(Map<String, String> localVars) {
-		this.localVars = localVars;
 	}
 	public String getComment() {
 		return comment;

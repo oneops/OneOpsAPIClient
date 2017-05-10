@@ -237,7 +237,6 @@ public class Operation extends APIClient {
 				+ IConstants.ACTIONS_URI);
 		if(response != null) {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
-				response.getBody().prettyPrint();
 				return response.getBody().jsonPath();
 			} else {
 				String msg = String.format("Failed to get actions due to %s", response.getStatusLine());

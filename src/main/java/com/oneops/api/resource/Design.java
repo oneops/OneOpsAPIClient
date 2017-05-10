@@ -1,5 +1,6 @@
 package com.oneops.api.resource;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -225,6 +226,46 @@ public class Design extends APIClient {
 		throw new OneOpsClientAPIException(msg);
 	}
 	
+	public CiResource updatePlatformLinks(String fromPlatformName, List<String> toPlatformNames) throws OneOpsClientAPIException {
+		if(fromPlatformName == null || fromPlatformName.length() == 0) {
+			String msg = "Missing from platform name to link";
+			throw new OneOpsClientAPIException(msg);
+		}
+		if(toPlatformNames == null || toPlatformNames.size() == 0) {
+			String msg = "Missing to platform name to link";
+			throw new OneOpsClientAPIException(msg);
+		}
+		
+		List<Long> toIds = new ArrayList<Long>();
+		for(String toPlatformName :  toPlatformNames) {
+			CiResource toPlatform = getPlatform(toPlatformName);
+			toIds.add(toPlatform.getCiId());
+		}
+		
+		CiResource fromPlatform = getPlatform(fromPlatformName);
+		
+		ResourceObject ro = new ResourceObject();
+		Map<String ,String> properties= new HashMap<String ,String>();
+		properties.put("ciId", fromPlatform.getCiId() + "");
+		ro.setProperties(properties);
+		JSONObject jsonObject = JsonUtil.createJsonObject(ro , "cms_dj_ci");
+		jsonObject.put("links_to", toIds);
+
+		RequestSpecification request = createRequest();
+		Response response = request.body(jsonObject.toString()).put(designURI + IConstants.PLATFORM_URI + fromPlatform.getCiId());
+		
+		if(response != null) {
+			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+				return response.getBody().as(CiResource.class);
+			} else {
+				String msg = String.format("Failed to update platform link to %s from %s due to %s response", toPlatformNames, fromPlatformName, response.getStatusLine());
+				throw new OneOpsClientAPIException(msg);
+			}
+		} 
+		
+		String msg = String.format("Failed to update platform link to %s from %s due to null response", toPlatformNames, fromPlatformName);
+		throw new OneOpsClientAPIException(msg);
+	}
 	
 	/**
 	 * Deletes the given platform
