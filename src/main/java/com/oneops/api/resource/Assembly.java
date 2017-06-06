@@ -144,6 +144,66 @@ public class Assembly extends APIClient {
 		throw new OneOpsClientAPIException(msg);
 	}
 	
+	
+	/**
+	 * Creates assembly for the given @assemblyName
+	 * 
+	 * @param assemblyName {mandatory} 
+	 * @param ownerEmail a valid email address is {mandatory}
+	 * @param comments
+	 * @param description
+	 * @param tags
+	 * @return
+	 * @throws OneOpsClientAPIException
+	 */
+	public CiResource updateAssembly(String assemblyName, String ownerEmail, String description, Map<String, String> tags) throws OneOpsClientAPIException {
+		ResourceObject ro = new ResourceObject();
+		Map<String ,String> attributes = new HashMap<String ,String>();
+		Map<String ,String> properties= new HashMap<String ,String>();
+		
+		if(assemblyName != null && assemblyName.length() > 0) {
+			properties.put("ciName", assemblyName);
+		} else {
+			String msg = "Missing assembly name to create one";
+			throw new OneOpsClientAPIException(msg);
+		}
+		
+		CiResource assembly = getAssembly(assemblyName);
+		
+		properties.put("ciId", String.valueOf(assembly.getCiId()));
+		ro.setProperties(properties);
+		
+		if(ownerEmail != null && ownerEmail.length() > 0) {
+			attributes.put("owner", ownerEmail);
+		}
+		
+		if(description != null && description.length() > 0) {
+			attributes.put("description", description);
+		}
+		
+		if( tags != null && !tags.isEmpty() ){
+			attributes.put("tags", JSONObject.valueToString(tags));
+		}
+		
+		ro.setAttributes(attributes);
+		
+		RequestSpecification request = createRequest();
+		JSONObject jsonObject = JsonUtil.createJsonObject(ro , "cms_ci");
+
+		Response response = request.body(jsonObject.toString()).put(IConstants.ASSEMBLY_URI + assemblyName);
+		
+		if(response != null) {
+			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+				return response.getBody().as(CiResource.class);
+			} else {
+				String msg = String.format("Failed to update assembly with name %s due to %s", assemblyName, response.getStatusLine());
+				throw new OneOpsClientAPIException(msg);
+			}
+		} 
+		String msg = String.format("Failed to update assembly with name %s due to null response", assemblyName);
+		throw new OneOpsClientAPIException(msg);
+	}
+	
 	/**
 	 * Deletes the given assembly
 	 * 
