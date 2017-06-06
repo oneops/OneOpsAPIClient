@@ -146,11 +146,10 @@ public class Assembly extends APIClient {
 	
 	
 	/**
-	 * Creates assembly for the given @assemblyName
+	 * Updates assembly for the given @assemblyName
 	 * 
 	 * @param assemblyName {mandatory} 
 	 * @param ownerEmail a valid email address is {mandatory}
-	 * @param comments
 	 * @param description
 	 * @param tags
 	 * @return
@@ -164,7 +163,7 @@ public class Assembly extends APIClient {
 		if(assemblyName != null && assemblyName.length() > 0) {
 			properties.put("ciName", assemblyName);
 		} else {
-			String msg = "Missing assembly name to create one";
+			String msg = "Missing assembly name to update one";
 			throw new OneOpsClientAPIException(msg);
 		}
 		
