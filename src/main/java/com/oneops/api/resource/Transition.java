@@ -834,6 +834,7 @@ public class Transition extends APIClient {
 			//Add existing attrProps to retain locking of attributes 
 			AttrProps attrProps = componentDetails.getAttrProps();
 			if(attrProps != null && attrProps.getAdditionalProperties() != null && attrProps.getAdditionalProperties().size() > 0 && attrProps.getAdditionalProperties().get("owner") != null) {
+				@SuppressWarnings("unchecked")
 				Map<String, String> ownersMap = (Map<String, String>) attrProps.getAdditionalProperties().get("owner");
 				for(Entry<String, String> entry : ownersMap.entrySet()) {
 					ownerProps.put(entry.getKey(), entry.getValue());
@@ -1347,6 +1348,8 @@ public class Transition extends APIClient {
 				cloudId);
 		throw new OneOpsClientAPIException(msg);
 	}
+	
+	
 	
 	/**
 	 * List relays

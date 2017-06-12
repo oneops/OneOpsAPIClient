@@ -436,4 +436,71 @@ public class Operation extends APIClient {
 		String msg = "Failed to execute procedures due to null response";
 		throw new OneOpsClientAPIException(msg);
 	}
+	
+	public CiResource updatePlatformAutoHealingStatus(String environmentName, String platformName, String healingOption, boolean isEnabled) throws OneOpsClientAPIException {
+		if (environmentName == null || environmentName.length() == 0) {
+			String msg = String.format("Missing environment name to be updated");
+			throw new OneOpsClientAPIException(msg);
+		}
+
+		if (platformName == null || platformName.length() == 0) {
+			String msg = String.format("Missing platform name to be updated");
+			throw new OneOpsClientAPIException(msg);
+		}
+
+		if (healingOption == null || healingOption.length() == 0) {
+			String msg = String.format("No healing options available to be updated");
+			throw new OneOpsClientAPIException(msg);
+		}
+
+		RequestSpecification request = createRequest();
+		
+		String enabled = "disable";
+		if(isEnabled) {
+			enabled = "enable";
+		}
+		
+		Response response = request.body("").queryParam("status", enabled)
+				.put(operationURI + IConstants.PLATFORM_URI + platformName + "/" + healingOption);
+		if (response != null) {
+			if (response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+				return response.getBody().as(CiResource.class);
+			} else {
+				String msg = String.format("Failed to update platforms due to %s", response.getStatusLine());
+				throw new OneOpsClientAPIException(msg);
+			}
+		}
+		String msg = String.format("Failed to update platforms due to null response");
+		throw new OneOpsClientAPIException(msg);
+	}
+	
+	public CiResource updatePlatformAutoReplaceConfig(String environmentName, String platformName, int repairCount, int repairTime) throws OneOpsClientAPIException {
+		if (environmentName == null || environmentName.length() == 0) {
+			String msg = String.format("Missing environment name to be updated");
+			throw new OneOpsClientAPIException(msg);
+		}
+
+		if (platformName == null || platformName.length() == 0) {
+			String msg = String.format("Missing platform name to be updated");
+			throw new OneOpsClientAPIException(msg);
+		}
+
+		RequestSpecification request = createRequest();
+		JSONObject jo = new JSONObject();
+		jo.put("replace_after_minutes", String.valueOf(repairTime));
+		jo.put("replace_after_repairs", String.valueOf(repairCount));
+		
+		Response response = request.body(jo.toString())
+				.put(operationURI + IConstants.PLATFORM_URI + platformName + "/autoreplace");
+		if (response != null) {
+			if (response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+				return response.getBody().as(CiResource.class);
+			} else {
+				String msg = String.format("Failed to update platforms due to %s", response.getStatusLine());
+				throw new OneOpsClientAPIException(msg);
+			}
+		}
+		String msg = String.format("Failed to update platforms due to null response");
+		throw new OneOpsClientAPIException(msg);
+	}
 }

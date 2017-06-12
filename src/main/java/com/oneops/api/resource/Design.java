@@ -711,7 +711,7 @@ public class Design extends APIClient {
 					ownerProps = Maps.newHashMap();
 				}
 				for(Entry<String, String> entry :  attributes.entrySet()) {
-					ownerProps.put(entry.getKey(), "");
+					ownerProps.put(entry.getKey(), "design");
 				}
 				ro.setOwnerProps(ownerProps);
 			}
