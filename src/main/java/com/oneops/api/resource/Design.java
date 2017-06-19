@@ -9,7 +9,6 @@ import java.util.Map.Entry;
 import org.json.JSONObject;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.jayway.restassured.path.json.JsonPath;
 import com.jayway.restassured.response.Response;
@@ -520,7 +519,7 @@ public class Design extends APIClient {
 			throw new OneOpsClientAPIException(msg);
 		}
 		
-		List<Long> dependsOnCiIds = Lists.newArrayList();
+		List<Long> dependsOnCiIds = new ArrayList<Long>();
 		for(String dependsOnComponentName : dependsOnComponentNames) {
 			CiResource dependsOnComponentDetails = getPlatformComponent(platformName, dependsOnComponentName);
 			if(dependsOnComponentDetails != null) {
