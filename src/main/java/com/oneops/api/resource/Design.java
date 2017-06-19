@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 import org.json.JSONObject;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.jayway.restassured.path.json.JsonPath;
 import com.jayway.restassured.response.Response;
@@ -226,6 +227,14 @@ public class Design extends APIClient {
 		throw new OneOpsClientAPIException(msg);
 	}
 	
+	/**
+	 * Update links between platforms 
+	 * 
+	 * @param fromPlatformName
+	 * @param toPlatformNames
+	 * @return
+	 * @throws OneOpsClientAPIException
+	 */
 	public CiResource updatePlatformLinks(String fromPlatformName, List<String> toPlatformNames) throws OneOpsClientAPIException {
 		if(fromPlatformName == null || fromPlatformName.length() == 0) {
 			String msg = "Missing from platform name to link";
@@ -479,6 +488,73 @@ public class Design extends APIClient {
 				}
 			} 
 		}
+		String msg = String.format("Failed to get update component %s due to null response", componentName);
+		throw new OneOpsClientAPIException(msg);
+	}
+	
+	/**
+	 * Update component dependency to sibling componenets of same type
+	 * @param platformName
+	 * @param componentName
+	 * @param dependsOnComponentName
+	 * @return
+	 * @throws OneOpsClientAPIException
+	 */
+	public CiResource updatePlatformComponentDependency(String platformName, String componentName, List<String> dependsOnComponentNames) throws OneOpsClientAPIException {
+		if(platformName == null || platformName.length() == 0) {
+			String msg = "Missing platform name to update component";
+			throw new OneOpsClientAPIException(msg);
+		}
+		if(componentName == null || componentName.length() == 0) {
+			String msg = "Missing component name to update component dependency";
+			throw new OneOpsClientAPIException(msg);
+		}
+		if(dependsOnComponentNames == null || dependsOnComponentNames.size() == 0) {
+			String msg = "Missing dependsOn component to be linked";
+			throw new OneOpsClientAPIException(msg);
+		} 
+		
+		CiResource componentDetails = getPlatformComponent(platformName, componentName);
+		if(componentDetails == null) {
+			String msg = String.format("Failed to get component %s due to not found", componentName);
+			throw new OneOpsClientAPIException(msg);
+		}
+		
+		List<Long> dependsOnCiIds = Lists.newArrayList();
+		for(String dependsOnComponentName : dependsOnComponentNames) {
+			CiResource dependsOnComponentDetails = getPlatformComponent(platformName, dependsOnComponentName);
+			if(dependsOnComponentDetails != null) {
+				if(dependsOnComponentDetails.getCiClassName().equals(componentDetails.getCiClassName())) {
+					dependsOnCiIds.add(dependsOnComponentDetails.getCiId());
+				} else {
+					String msg = String.format("component %s is not same type as component %s %s", dependsOnComponentName, componentName, componentDetails.getCiClassName());
+					throw new OneOpsClientAPIException(msg);
+				}
+				
+			} else {
+				String msg = String.format("Failed to get component %s due to be linked", dependsOnComponentName);
+				throw new OneOpsClientAPIException(msg);
+			}
+		}
+	
+		Long ciId = componentDetails.getCiId();
+		RequestSpecification request = createRequest();
+		
+		JSONObject jsonObject = new JSONObject();
+		jsonObject.put("cms_dj_ci", new JSONObject());
+		
+		
+		jsonObject.put("sibling_depends_on", dependsOnCiIds);
+		Response response = request.body(jsonObject.toString()).put(designURI + IConstants.PLATFORM_URI + platformName + IConstants.COMPONENT_URI + ciId);
+		if(response != null) {
+			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+				return response.getBody().as(CiResource.class);
+			} else {
+				String msg = String.format("Failed to get update component %s due to %s", componentName, response.getStatusLine());
+				throw new OneOpsClientAPIException(msg);
+			}
+		} 
+	
 		String msg = String.format("Failed to get update component %s due to null response", componentName);
 		throw new OneOpsClientAPIException(msg);
 	}
