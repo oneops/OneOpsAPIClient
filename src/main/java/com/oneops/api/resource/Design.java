@@ -6,9 +6,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.jayway.restassured.path.json.JsonPath;
 import com.jayway.restassured.response.Response;
@@ -393,7 +395,19 @@ public class Design extends APIClient {
 			if(attr == null) {
 				attr = Maps.newHashMap();
 			}
+			
+			List<Long> dependsOnComponents = Lists.newArrayList();
 			if(attributes != null && attributes.size() > 0) {
+				if(attributes.containsKey("sibling_depends_on")) {
+					String dependsOn = attributes.get("sibling_depends_on");
+					JSONArray dependsOnArray = new JSONArray(dependsOn);
+					List<String> dependsOnList = Lists.newArrayList();
+					for (Object object : dependsOnArray) {
+						dependsOnList.add(String.valueOf(object));
+					}
+					dependsOnComponents = getDependsOnSiblingIds(platformName, componentName, componentDetails.getString("ciClassName"), dependsOnList);
+					attributes.remove("sibling_depends_on");
+				}
 				attr.putAll(attributes);
 				
 				Map<String, String> ownerProps =  componentDetails.getMap("ciAttrProps.owner");
@@ -409,6 +423,9 @@ public class Design extends APIClient {
 			ro.setProperties(properties);
 			JSONObject jsonObject = JsonUtil.createJsonObject(ro , "cms_dj_ci");
 			jsonObject.put("template_name", componentName);
+			if(dependsOnComponents != null && dependsOnComponents.size() > 0) {
+				jsonObject.put("sibling_depends_on", dependsOnComponents);
+			}
 			Response response = request.body(jsonObject.toString()).post(designURI + IConstants.PLATFORM_URI + platformName + IConstants.COMPONENT_URI );
 			if(response != null) {
 				if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
@@ -455,9 +472,19 @@ public class Design extends APIClient {
 			RequestSpecification request = createRequest();
 			
 			Map<String, String> attr = Maps.newHashMap();
+			List<String> dependsOnList = Lists.newArrayList();
 			//Add ciAttributes to be updated
-			if(attributes != null && attributes.size() > 0)
+			if(attributes != null && attributes.size() > 0) {
+				if(attributes.containsKey("sibling_depends_on")) {
+					String dependsOn = attributes.get("sibling_depends_on");
+					JSONArray dependsOnArray = new JSONArray(dependsOn);
+					for (Object object : dependsOnArray) {
+						dependsOnList.add(String.valueOf(object));
+					}
+					attributes.remove("sibling_depends_on");
+				}
 				attr.putAll(attributes);
+			}
 			
 			Map<String, String> ownerProps = Maps.newHashMap();
 			//Add existing attrProps to retain locking of attributes 
@@ -480,6 +507,9 @@ public class Design extends APIClient {
  			Response response = request.body(jsonObject.toString()).put(designURI + IConstants.PLATFORM_URI + platformName + IConstants.COMPONENT_URI + ciId);
 			if(response != null) {
 				if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+					if(dependsOnList != null && dependsOnList.size() > 0) {
+						updatePlatformComponentDependency(platformName, componentName, dependsOnList);
+					}
 					return response.getBody().as(CiResource.class);
 				} else {
 					String msg = String.format("Failed to get update component %s due to %s", componentName, response.getStatusLine());
@@ -519,22 +549,7 @@ public class Design extends APIClient {
 			throw new OneOpsClientAPIException(msg);
 		}
 		
-		List<Long> dependsOnCiIds = new ArrayList<Long>();
-		for(String dependsOnComponentName : dependsOnComponentNames) {
-			CiResource dependsOnComponentDetails = getPlatformComponent(platformName, dependsOnComponentName);
-			if(dependsOnComponentDetails != null) {
-				if(dependsOnComponentDetails.getCiClassName().equals(componentDetails.getCiClassName())) {
-					dependsOnCiIds.add(dependsOnComponentDetails.getCiId());
-				} else {
-					String msg = String.format("component %s is not same type as component %s %s", dependsOnComponentName, componentName, componentDetails.getCiClassName());
-					throw new OneOpsClientAPIException(msg);
-				}
-				
-			} else {
-				String msg = String.format("Failed to get component %s due to be linked", dependsOnComponentName);
-				throw new OneOpsClientAPIException(msg);
-			}
-		}
+		List<Long> dependsOnCiIds = getDependsOnSiblingIds(platformName, componentName, componentDetails.getCiClassName(), dependsOnComponentNames);
 	
 		Long ciId = componentDetails.getCiId();
 		RequestSpecification request = createRequest();
@@ -556,6 +571,27 @@ public class Design extends APIClient {
 	
 		String msg = String.format("Failed to get update component %s due to null response", componentName);
 		throw new OneOpsClientAPIException(msg);
+	}
+
+	private List<Long> getDependsOnSiblingIds(String platformName, String componentName, String componentClassName,
+			List<String> dependsOnComponentNames) throws OneOpsClientAPIException {
+		List<Long> dependsOnCiIds = new ArrayList<Long>();
+		for(String dependsOnComponentName : dependsOnComponentNames) {
+			CiResource dependsOnComponentDetails = getPlatformComponent(platformName, dependsOnComponentName);
+			if(dependsOnComponentDetails != null) {
+				if(dependsOnComponentDetails.getCiClassName().equals(componentClassName)) {
+					dependsOnCiIds.add(dependsOnComponentDetails.getCiId());
+				} else {
+					String msg = String.format("component %s is not same type as component %s class -> %s", dependsOnComponentName, componentName, componentClassName);
+					throw new OneOpsClientAPIException(msg);
+				}
+				
+			} else {
+				String msg = String.format("Failed to get component %s due to be linked", dependsOnComponentName);
+				throw new OneOpsClientAPIException(msg);
+			}
+		}
+		return dependsOnCiIds;
 	}
 	
 	/**
@@ -834,6 +870,37 @@ public class Design extends APIClient {
 		throw new OneOpsClientAPIException(msg);
 	}
 	
+	
+	/**
+	 * Get local variable details
+	 * 
+	 * @param platformName
+	 * @return
+	 * @throws OneOpsClientAPIException
+	 */
+	public CiResource getPlatformVariable(String platformName, String variableName) throws OneOpsClientAPIException {
+		if(platformName == null || platformName.length() == 0) {
+			String msg = "Missing platform name to list platform variables";
+			throw new OneOpsClientAPIException(msg);
+		}
+		if(variableName == null || variableName.length() == 0) {
+			String msg = "Missing variable name to fetch";
+			throw new OneOpsClientAPIException(msg);
+		}
+		RequestSpecification request = createRequest();
+		Response response = request.get(designURI + IConstants.PLATFORM_URI + platformName + IConstants.VARIABLES_URI + variableName);
+		if(response != null) {
+			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+				return response.getBody().as(CiResource.class);
+			} else {
+				String msg = String.format("Failed to get design platform variable %s due to %s", variableName, response.getStatusLine());
+				throw new OneOpsClientAPIException(msg);
+			}
+		} 
+		String msg = String.format("Failed to get design platform variable % due to null response", variableName);
+		throw new OneOpsClientAPIException(msg);
+	}
+	
 	/**
 	 * Add platform variables for a given assembly/design
 	 * 
@@ -1054,6 +1121,32 @@ public class Design extends APIClient {
 			}
 		} 
 		String msg = "Failed to get list of design variables due to null response";
+		throw new OneOpsClientAPIException(msg);
+	}
+	
+	/**
+	 * Get global variable details
+	 * 
+	 * @param platformName
+	 * @return
+	 * @throws OneOpsClientAPIException
+	 */
+	public CiResource getGlobalVariable(String variableName) throws OneOpsClientAPIException {
+		if(variableName == null || variableName.length() == 0) {
+			String msg = "Missing variable name to fetch";
+			throw new OneOpsClientAPIException(msg);
+		}
+		RequestSpecification request = createRequest();
+		Response response = request.get(designURI + IConstants.VARIABLES_URI + variableName);
+		if(response != null) {
+			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+				return response.getBody().as(CiResource.class);
+			} else {
+				String msg = String.format("Failed to get global variable %s due to %s", variableName, response.getStatusLine());
+				throw new OneOpsClientAPIException(msg);
+			}
+		} 
+		String msg = String.format("Failed to get global variable % due to null response", variableName);
 		throw new OneOpsClientAPIException(msg);
 	}
 	
