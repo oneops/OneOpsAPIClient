@@ -493,8 +493,8 @@ public class Transition extends APIClient {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				return response.getBody().as(Release.class);
 			} else {
-				String msg = String.format("No bom releases found for environment %s ", environmentName);
-				LOG.error(msg);
+				String msg = String.format("No bom-releases/updates found for environment %s ", environmentName);
+				LOG.warn(msg);
 				return null;
 			}
 		} 
