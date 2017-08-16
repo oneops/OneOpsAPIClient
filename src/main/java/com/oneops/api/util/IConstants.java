@@ -10,6 +10,7 @@ public interface IConstants {
 	static String PLATFORM_URI = "/platforms/";
 	static String COMPONENT_URI = "/components/";
 	static String CLOUDS_URI = "/clouds/";
+	static String SERVICE_URI = "/services/";
 	static String ACCOUNT_URI = "/account/organizations/";
 	static String ORGANIZATION_URI = "/organization/";
 	static String VARIABLES_URI = "/variables/";
