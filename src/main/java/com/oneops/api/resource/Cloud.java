@@ -181,11 +181,11 @@ public class Cloud extends APIClient {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				return JsonUtil.toObject(response.getBody().asString(), new TypeReference<List<CiResource>>(){});
 			} else {
-				String msg = String.format("Failed to get cloud %s diff %s due to %s", cloudName, response.getStatusLine());
+				String msg = String.format("Failed to get cloud %s due to %s", cloudName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
 		} 
-		String msg = String.format("Failed to get cloud %s diff %s due to null response", cloudName);
+		String msg = String.format("Failed to get cloud %s due to null response", cloudName);
 		throw new OneOpsClientAPIException(msg);
 	}
 	
