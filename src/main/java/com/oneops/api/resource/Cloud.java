@@ -129,13 +129,15 @@ public class Cloud extends APIClient {
 	}
 	
 	/**
-	 * Update specific cloud service attributes
-	 * 
+	 *  Update specific cloud service attributes
+	 *  
 	 * @param cloudName
-	 * @param attr 
+	 * @param serviceName
+	 * @param attr
 	 * @return
 	 * @throws OneOpsClientAPIException
 	 */
+	
 	public CiResource updateCloudService(String cloudName, String serviceName, Map<String, String> attr) throws OneOpsClientAPIException {
 		if(cloudName == null || cloudName.length() == 0) {
 			String msg = "Missing cloud name to update service attributes";
@@ -163,6 +165,82 @@ public class Cloud extends APIClient {
 		throw new OneOpsClientAPIException(msg);
 	}
 	
+	
+	/**
+	 * Add specific service to the cloud
+	 * 
+	 * @param cloudName
+	 * @param serviceName
+	 * @param attr
+	 * @return
+	 * @throws OneOpsClientAPIException
+	 */
+	 
+	public CiResource addCloudService(String cloudName, String serviceType, String serviceName, Map<String, String> attr) throws OneOpsClientAPIException {
+		if(cloudName == null || cloudName.length() == 0) {
+			String msg = "Missing cloud name to add service";
+			throw new OneOpsClientAPIException(msg);
+		}
+		if(serviceType == null || serviceType.length() == 0) {
+			String msg = "Missing service type to add service";
+			throw new OneOpsClientAPIException(msg);
+		}
+		if(serviceName == null || serviceName.length() == 0) {
+			String msg = "Missing cloud name to add service";
+			throw new OneOpsClientAPIException(msg);
+		}
+		Map<String, List<CiResource>> availableServices = listAvailableCloudServices(cloudName);
+		ResourceObject ro = new ResourceObject();
+		Map<String ,String> attributes = new HashMap<String, String>();
+		Map<String ,String> properties= new HashMap<String, String>();
+		String mgmtId = null;
+				
+		if(availableServices != null && availableServices.size() > 0) {
+			for (Entry<String, List<CiResource>> entry : availableServices.entrySet()) {
+				if(serviceType.equals(entry.getKey())) {
+					for(CiResource aService : entry.getValue()) {
+						if(serviceName.equals(aService.getCiName())) {
+							mgmtId = String.valueOf(aService.getCiId());
+							CiResource newServiceObj = getNewServiceObj(cloudName, serviceName, mgmtId);
+							
+							properties.put("ciName", newServiceObj.getCiName());
+							properties.put("ciClassName", newServiceObj.getCiClassName());
+							ro.setProperties(properties);
+							
+							for(Entry<String, Object> entry1 : newServiceObj.getCiAttributes().getAdditionalProperties().entrySet()) {
+								attributes.put(entry1.getKey(), String.valueOf(entry1.getValue()));
+							}
+							if(attr != null) {
+								for(Entry<String, String> entry1 : attr.entrySet()) {
+									attributes.put(entry1.getKey(), entry1.getValue());
+								}
+							}
+							break;
+						}
+					}
+				}
+				if(attributes.size() > 0) {
+					ro.setAttributes(attributes);
+					RequestSpecification request = createRequest();
+					JSONObject jsonObject = JsonUtil.createJsonObject(ro , "cms_ci");
+					jsonObject.put("mgmtCiId", mgmtId);
+					Response response = request.body(jsonObject.toString()).post(IConstants.CLOUDS_URI + cloudName + IConstants.SERVICE_URI);
+					if(response != null) {
+						if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+							return response.getBody().as(CiResource.class);
+						} else {
+							String msg = String.format("Failed to add service %s to cloud %s due to %s", serviceName, cloudName, response.getStatusLine());
+							throw new OneOpsClientAPIException(msg);
+						}
+					}
+					break;
+				}
+			}
+		}
+		String msg = String.format("Failed to update service %s to cloud %s due to null response", serviceName, cloudName);
+		throw new OneOpsClientAPIException(msg);
+	}
+	
 	/**
 	 * Fetches cloud service differences w.r.t template
 	 * 
@@ -181,11 +259,67 @@ public class Cloud extends APIClient {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				return JsonUtil.toObject(response.getBody().asString(), new TypeReference<List<CiResource>>(){});
 			} else {
-				String msg = String.format("Failed to get cloud %s due to %s", cloudName, response.getStatusLine());
+				String msg = String.format("Failed to get cloud %s diff due to %s", cloudName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
 		} 
-		String msg = String.format("Failed to get cloud %s due to null response", cloudName);
+		String msg = String.format("Failed to get cloud %s diff due to null response", cloudName);
+		throw new OneOpsClientAPIException(msg);
+	}
+	
+	
+	/**
+	 * Fetches cloud service differences w.r.t template
+	 * 
+	 * @param cloudName
+	 * @return
+	 * @throws OneOpsClientAPIException
+	 */
+	public Map<String, List<CiResource>> listAvailableCloudServices(String cloudName) throws OneOpsClientAPIException {
+		if(cloudName == null || cloudName.length() == 0) {
+			String msg = "Missing cloud name to fetch service details";
+			throw new OneOpsClientAPIException(msg);
+		}
+		RequestSpecification request = createRequest();
+		Response response = request.get(IConstants.CLOUDS_URI + cloudName + IConstants.SERVICE_URI + "available");
+		if(response != null) {
+			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+				return JsonUtil.toObject(response.getBody().asString(), new TypeReference<Map<String, List<CiResource>>>(){});
+			} else {
+				String msg = String.format("Failed to get cloud %s available servcies due to %s", cloudName, response.getStatusLine());
+				throw new OneOpsClientAPIException(msg);
+			}
+		} 
+		String msg = String.format("Failed to get cloud %s available servcies due to null response", cloudName);
+		throw new OneOpsClientAPIException(msg);
+	}
+	
+	private CiResource getNewServiceObj(String cloudName, String serviceName, String mgmtId) throws OneOpsClientAPIException {
+		if(cloudName == null || cloudName.length() == 0) {
+			String msg = "Missing cloud name to create new service";
+			throw new OneOpsClientAPIException(msg);
+		}
+		if(serviceName == null || serviceName.length() == 0) {
+			String msg = "Missing service name to create new service";
+			throw new OneOpsClientAPIException(msg);
+		}
+		if(mgmtId == null || mgmtId.length() == 0) {
+			String msg = "Missing mgmtId to create new service";
+			throw new OneOpsClientAPIException(msg);
+		}
+		
+		RequestSpecification request = createRequest();
+		Response response = request.get(IConstants.CLOUDS_URI + cloudName + IConstants.SERVICE_URI + "new?mgmtCiId=" + mgmtId);
+		if(response != null) {
+			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+				return response.getBody().as(CiResource.class);
+			} else {
+				String msg = String.format("Failed to get new cloud service for org %s cloud %s due to %s", instance.getOrgname(), cloudName, response.getStatusLine());
+				throw new OneOpsClientAPIException(msg);
+			}
+		}
+		
+		String msg = "Failed to get new service object for cloud service : "+ serviceName + ". ";
 		throw new OneOpsClientAPIException(msg);
 	}
 	
