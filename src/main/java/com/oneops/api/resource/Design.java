@@ -202,7 +202,27 @@ public class Design extends APIClient {
 		throw new OneOpsClientAPIException(msg);
 	}
 	
-	
+	/**
+	 * Fetches latest release for the given assembly/environment
+	 * 
+	 * @param environmentName
+	 * @return
+	 * @throws OneOpsClientAPIException
+	 */
+	public Release getLatestRelease() throws OneOpsClientAPIException {
+		RequestSpecification request = createRequest();
+		Response response = request.get(designReleaseURI + "latest" );
+		if(response != null) {
+			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+				return response.getBody().as(Release.class);
+			} else {
+				String msg = String.format("Failed to get latest releases due to %s", response.getStatusLine());
+				throw new OneOpsClientAPIException(msg);
+			}
+		} 
+		String msg = String.format("Failed to get latest releases due to null response");
+		throw new OneOpsClientAPIException(msg);
+	}
 	/**
 	 * Commits specific platform with open release
 	 * 
@@ -486,22 +506,6 @@ public class Design extends APIClient {
 				attr.putAll(attributes);
 			}
 			
-			Map<String, String> ownerProps = Maps.newHashMap();
-			//Add existing attrProps to retain locking of attributes 
-			AttrProps attrProps = componentDetails.getAttrProps();
-			if(attrProps != null && attrProps.getAdditionalProperties() != null && attrProps.getAdditionalProperties().size() > 0 && attrProps.getAdditionalProperties().get("owner") != null) {
-				Map<String, String> ownersMap = (Map<String, String>) attrProps.getAdditionalProperties().get("owner");
-				for(Entry<String, String> entry : ownersMap.entrySet()) {
-					ownerProps.put(entry.getKey(), entry.getValue());
-				}
-			}
-			
-			//Add updated attributes to attrProps to lock them
-			for(Entry<String, String> entry :  attributes.entrySet()) {
-				ownerProps.put(entry.getKey(), "design");
-			}
-			
-			ro.setOwnerProps(ownerProps);
 			ro.setAttributes(attr);
 			JSONObject jsonObject = JsonUtil.createJsonObject(ro , "cms_dj_ci");
  			Response response = request.body(jsonObject.toString()).put(designURI + IConstants.PLATFORM_URI + platformName + IConstants.COMPONENT_URI + ciId);
@@ -845,6 +849,43 @@ public class Design extends APIClient {
 	}
 	
 	/**
+	 * Delete attachment from a given component/platform
+	 * 
+	 * @param platformName
+	 * @param componentName
+	 * @param attachmentName
+	 * @return
+	 * @throws OneOpsClientAPIException
+	 */
+	public CiResource deleteAttachment(String platformName, String componentName, String attachmentName) throws OneOpsClientAPIException {
+		if(platformName == null || platformName.length() == 0) {
+			String msg = "Missing platform name to delete attachment";
+			throw new OneOpsClientAPIException(msg);
+		}
+		if(componentName == null || componentName.length() == 0) {
+			String msg = "Missing component name to delete attachment";
+			throw new OneOpsClientAPIException(msg);
+		}
+		if(attachmentName == null || attachmentName.length() == 0) {
+			String msg = "Missing component name to delete attachment";
+			throw new OneOpsClientAPIException(msg);
+		}
+		RequestSpecification request = createRequest();
+		Response response = request.delete(designURI + IConstants.PLATFORM_URI + platformName + IConstants.COMPONENT_URI + componentName + IConstants.ATTACHMENTS_URI + attachmentName);
+		if(response != null) {
+			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+				return response.getBody().as(CiResource.class);
+			} else {
+				String msg = String.format("Failed to delete attachment %s on component %s due to %s", attachmentName, componentName, response.getStatusLine());
+				throw new OneOpsClientAPIException(msg);
+			}
+		} 
+		
+		String msg = String.format("Failed to delete attachment %s on component %s due to null response", attachmentName, componentName);
+		throw new OneOpsClientAPIException(msg);
+	}
+	
+	/**
 	 * List local variables for a given assembly/design/platform
 	 * 
 	 * @param platformName
@@ -938,20 +979,26 @@ public class Design extends APIClient {
 			if(newVarJsonPath != null) {
 				Map<String, String> attr = newVarJsonPath.getMap("ciAttributes");
 				Map<String, String> properties = Maps.newHashMap();
+				Map<String, String> ownerProps = Maps.newHashMap();
+				
 				if(attr == null) {
 					attr = Maps.newHashMap();
 				}
 				if(isSecure) {
 					attr.put("secure", "true");
 					attr.put("encrypted_value", variableValue);
+					ownerProps.put("secure", "design");
+					ownerProps.put("encrypted_value", "design");
 				} else {
 					attr.put("secure", "false");
 					attr.put("value", variableValue);
+					ownerProps.put("value", "design");
 				}
 				
 				properties.put("ciName", variableName);
 				ro.setProperties(properties);
 				ro.setAttributes(attr);
+				ro.setOwnerProps(ownerProps);
 			}
 		}
 		
@@ -1095,11 +1142,41 @@ public class Design extends APIClient {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				return response.getBody().as(CiResource.class);
 			} else {
-				String msg = String.format("Failed to delete platform with name %s due to %s", platformName, response.getStatusLine());
+				String msg = String.format("Failed to delete platform %s variable %s due to %s", platformName, variableName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
 		} 
-		String msg = String.format("Failed to delete platform with name %s due to null response", platformName);
+		String msg = String.format("Failed to delete platform %s variable %s due to null response", platformName, variableName);
+		throw new OneOpsClientAPIException(msg);
+	}
+	
+	
+	/**
+	 * Deletes the given global variable
+	 * 
+	 * @param platformName
+	 * @param variableName
+	 * @return
+	 * @throws OneOpsClientAPIException
+	 */
+	
+	public CiResource deleteGlobalVariable(String variableName) throws OneOpsClientAPIException {
+		if(variableName == null || variableName.length() == 0) {
+			String msg = "Missing variable name to delete it";
+			throw new OneOpsClientAPIException(msg);
+		}
+		
+		RequestSpecification request = createRequest();
+		Response response = request.delete(designURI + IConstants.VARIABLES_URI + variableName);
+		if(response != null) {
+			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+				return response.getBody().as(CiResource.class);
+			} else {
+				String msg = String.format("Failed to delete global with name %s due to %s", variableName, response.getStatusLine());
+				throw new OneOpsClientAPIException(msg);
+			}
+		} 
+		String msg = String.format("Failed to delete global with name %s due to null response", variableName);
 		throw new OneOpsClientAPIException(msg);
 	}
 
@@ -1183,15 +1260,19 @@ public class Design extends APIClient {
 			if(newVarJsonPath != null) {
 				Map<String, String> attr = newVarJsonPath.getMap("ciAttributes");
 				Map<String, String> properties = Maps.newHashMap();
+				Map<String, String> ownerProps = Maps.newHashMap();
 				if(attr == null) {
 					attr = Maps.newHashMap();
 				}
 				if(isSecure) {
 					attr.put("secure", "true");
 					attr.put("encrypted_value", variableValue);
+					ownerProps.put("secure", "design");
+					ownerProps.put("encrypted_value", "design");
 				} else {
 					attr.put("secure", "false");
 					attr.put("value", variableValue);
+					ownerProps.put("value", "design");
 				}
 
 				properties.put("ciName", variableName);
