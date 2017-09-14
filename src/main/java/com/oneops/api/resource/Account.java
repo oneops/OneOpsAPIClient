@@ -12,6 +12,7 @@ import com.oneops.api.APIClient;
 import com.oneops.api.OOInstance;
 import com.oneops.api.exception.OneOpsClientAPIException;
 import com.oneops.api.resource.model.Organization;
+import com.oneops.api.resource.model.User;
 import com.oneops.api.util.IConstants;
 import com.oneops.api.util.JsonUtil;
 
@@ -153,4 +154,24 @@ public class Account extends APIClient {
 		throw new OneOpsClientAPIException(msg);
 	}
 
+	/**
+	 * Fetches account details
+	 * 
+	 * @return
+	 * @throws OneOpsClientAPIException
+	 */
+	public User getAccount() throws OneOpsClientAPIException {
+		RequestSpecification request = createRequest();
+		Response response = request.get("/account/profile");
+		if(response != null) {
+			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+				return response.getBody().as(User.class);
+			} else {
+				String msg = String.format("Failed to get account details due to %s", response.getStatusLine());
+				throw new OneOpsClientAPIException(msg);
+			}
+		} 
+		String msg = String.format("Failed to get account details due to null response");
+		throw new OneOpsClientAPIException(msg);
+	}
 }
