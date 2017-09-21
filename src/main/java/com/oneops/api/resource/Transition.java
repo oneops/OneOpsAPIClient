@@ -237,11 +237,11 @@ public class Transition extends APIClient {
 				return response.getBody().as(Release.class);
 				
 			} else {
-				String msg = String.format("Failed to commit environment due to %s",  response.getStatusLine());
+				String msg = String.format("Failed to commit environment %s due to %s", environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
 		} 
-		String msg = "Failed to commit environment due to null response";
+		String msg = String.format("Failed to commit environment %s due to null response", environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
 	
@@ -281,7 +281,7 @@ public class Transition extends APIClient {
 				throw new OneOpsClientAPIException(msg);
 			}
 		} else {
-			String msg = String.format("Failed to find release id to be deployed");
+			String msg = String.format("Failed to find release id to be deployed for environment %s", environmentName);
 			throw new OneOpsClientAPIException(msg);
 		}
 				
@@ -483,11 +483,11 @@ public class Transition extends APIClient {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				return response.getBody().as(CiResource.class);
 			} else {
-				String msg = String.format("Failed to disable platforms for environment %s due to %s", environmentName, response.getStatusLine());
+				String msg = String.format("Failed to update platforms %s status to %s for environment %s due to %s", platformNames, status, environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
 		} 
-		String msg = String.format("Failed to disable platforms for environment %s due to null response", environmentName);
+		String msg = String.format("Failed to update platforms %s status to %s for environment %s due to null response", platformNames, status, environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
 	
@@ -730,11 +730,11 @@ public class Transition extends APIClient {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				return JsonUtil.toObject(response.getBody().asString(), new TypeReference<List<CiResource>>(){});
 			} else {
-				String msg = String.format("Failed to get list of environment platforms due to %s", response.getStatusLine());
+				String msg = String.format("Failed to get list of platforms for environemnt %s due to %s", environmentName,response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
 		} 
-		String msg = "Failed to get list of environment platforms due to null response";
+		String msg = String.format("Failed to get list of platforms for environemnt %s due to null response", environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
 	
@@ -761,11 +761,11 @@ public class Transition extends APIClient {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				return response.getBody().as(CiResource.class);
 			} else {
-				String msg = String.format("Failed to get environment platform details due to %s", response.getStatusLine());
+				String msg = String.format("Failed to get platform %s details for environment %s due to %s", platformName, environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
 		} 
-		String msg = "Failed to get environment platform details due to null response";
+		String msg = String.format("Failed to get platform %s details for environment %s due to null response", platformName, environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
 	
@@ -792,11 +792,11 @@ public class Transition extends APIClient {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				return JsonUtil.toObject(response.getBody().asString(), new TypeReference<List<CiResource>>(){});
 			} else {
-				String msg = String.format("Failed to get list of environment platforms components due to %s", response.getStatusLine());
+				String msg = String.format("Failed to list components for platform %s environment %s due to %s", platformName, environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
 		} 
-		String msg = "Failed to get list of environment platforms components due to null response";
+		String msg = String.format("Failed to list components for platform %s environment %s due to null response", platformName, environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
 	
@@ -828,11 +828,11 @@ public class Transition extends APIClient {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				return response.getBody().as(CiResource.class);
 			} else {
-				String msg = String.format("Failed to get enviornment platform component details due to %s", response.getStatusLine());
+				String msg = String.format("Failed to get enviornment %s platform %s component %s details due to %s", environmentName, platformName, componentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
 		} 
-		String msg = "Failed to get enviornment platform component details due to null response";
+		String msg = String.format("Failed to get enviornment %s platform %s component %s details due to null response", environmentName, platformName, componentName);
 		throw new OneOpsClientAPIException(msg);
 	}
 	
@@ -901,12 +901,12 @@ public class Transition extends APIClient {
 				if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 					return response.getBody().as(CiResource.class);
 				} else {
-					String msg = String.format("Failed to get update component %s due to %s", componentName, response.getStatusLine());
+					String msg = String.format("Failed to get update component %s for platform %s environment %s due to %s", componentName, platformName, environmentName, response.getStatusLine());
 					throw new OneOpsClientAPIException(msg);
 				}
 			} 
 		}
-		String msg = String.format("Failed to get update component %s due to null response", componentName);
+		String msg = String.format("Failed to get update component %s for platform %s environment %s due to null response", componentName, platformName, environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
 	
@@ -939,11 +939,11 @@ public class Transition extends APIClient {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				return response.getBody().as(CiResource.class);
 			} else {
-				String msg = String.format("Failed to get platform component attachment details due to %s", response.getStatusLine());
+				String msg = String.format("Failed to get attachment %s details for component %s platform %s environment %s due to %s", attachmentName, componentName, platformName, environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
 		} 
-		String msg = "Failed to get platform component attachment details due to null response";
+		String msg = String.format("Failed to get attachment %s details for component %s platform %s environment %s due to null response", attachmentName, componentName, platformName, environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
 	
@@ -1013,6 +1013,7 @@ public class Transition extends APIClient {
 			//Add existing attrProps to retain locking of attributes 
 			AttrProps attrProps = attachmentDetails.getAttrProps();
 			if(attrProps != null && attrProps.getAdditionalProperties() != null && attrProps.getAdditionalProperties().size() > 0 && attrProps.getAdditionalProperties().get("owner") != null) {
+				@SuppressWarnings("unchecked")
 				Map<String, String> ownersMap = (Map<String, String>) attrProps.getAdditionalProperties().get("owner");
 				for(Entry<String, String> entry : ownersMap.entrySet()) {
 					ownerProps.put(entry.getKey(), entry.getValue());
@@ -1033,12 +1034,12 @@ public class Transition extends APIClient {
 				if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 					return response.getBody().as(CiResource.class);
 				} else {
-					String msg = String.format("Failed to get update attachment %s due to %s", componentName, response.getStatusLine());
+					String msg = String.format("Failed to get update attachment %s on component %s platform %s environemnt %s due to %s", attachmentName, componentName, platformName, environmentName, response.getStatusLine());
 					throw new OneOpsClientAPIException(msg);
 				}
 			} 
 		}
-		String msg = String.format("Failed to get update attachment %s due to null response", componentName);
+		String msg = String.format("Failed to get update attachment %s on component %s platform %s environemnt %s due to null response", attachmentName, componentName, platformName, environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
 	
@@ -1074,11 +1075,11 @@ public class Transition extends APIClient {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				return response.getBody().as(CiResource.class);
 			} else {
-				String msg = String.format("Failed to touch component %s due to %s", componentName, response.getStatusLine());
+				String msg = String.format("Failed to touch component %s for platform %s environment %s due to %s", componentName, platformName, environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
 		} 
-		String msg = String.format("Failed to get touch component %s due to null response", componentName);
+		String msg = String.format("Failed to touch component %s for platform %s environment %s due to null response", componentName, platformName, environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
 	
@@ -1187,11 +1188,11 @@ public class Transition extends APIClient {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				return JsonUtil.toObject(response.getBody().asString(), new TypeReference<List<CiResource>>(){});
 			} else {
-				String msg = String.format("Failed to get list of environment platforms variables due to %s", response.getStatusLine());
+				String msg = String.format("Failed to list local variables for platform %s environment %s due to %s", platformName, environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
 		} 
-		String msg = "Failed to get list of environment platforms variables due to null response";
+		String msg = String.format("Failed to list local variables for platform %s environment %s due to null response", platformName, environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
 	
@@ -1264,7 +1265,7 @@ public class Transition extends APIClient {
 							if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 								success = true;
 							} else {
-								String msg = String.format("Failed to get update variables %s due to %s", variableName, response.getStatusLine());
+								String msg = String.format("Failed to update local variable %s with value %s for platform %s environment %s due to %s", variableName, variableValue, platformName, environmentName, response.getStatusLine());
 								throw new OneOpsClientAPIException(msg);
 							}
 						} 
@@ -1273,7 +1274,7 @@ public class Transition extends APIClient {
 					success = true;
 				}
 			} else {
-				String msg = String.format("Failed to get update variables %s due to null response", variableName);
+				String msg = String.format("Failed to update local variable %s with value %s for platform %s environment %s due to null response", variableName, variableValue, platformName, environmentName);
 				throw new OneOpsClientAPIException(msg);
 			}
 			
@@ -1301,11 +1302,11 @@ public class Transition extends APIClient {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				return JsonUtil.toObject(response.getBody().asString(), new TypeReference<List<CiResource>>(){});
 			} else {
-				String msg = String.format("Failed to get list of environment variables due to %s", response.getStatusLine());
+				String msg = String.format("Failed to list global variables of environment %s due to %s", environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
 		} 
-		String msg = "Failed to get list of environment variables due to null response";
+		String msg = String.format("Failed to list global variables of environment %s due to null response", environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
 	
@@ -1368,7 +1369,7 @@ public class Transition extends APIClient {
 						if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 							success = true;
 						} else {
-							String msg = String.format("Failed to get update variables %s due to %s", variableName, response.getStatusLine());
+							String msg = String.format("Failed to update global variable %s with value %s of environment %s due to %s", variableName, variableValue, environmentName, response.getStatusLine());
 							throw new OneOpsClientAPIException(msg);
 						}
 					} 
@@ -1376,7 +1377,7 @@ public class Transition extends APIClient {
 					success = true;
 				}
 			} else {
-				String msg = String.format("Failed to get update variables %s due to null response", variableName);
+				String msg = String.format("Failed to update global variable %s with value %s of environment %s due to null response", variableName, variableValue, environmentName);
 				throw new OneOpsClientAPIException(msg);
 			}
 			
@@ -1488,11 +1489,11 @@ public class Transition extends APIClient {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				return true;
 			} else {
-				String msg = String.format("Failed to update platforms redundancy for environment with name %s due to %s", environmentName, response.getStatusLine());
+				String msg = String.format("Failed to update platforms %s redundancy for environment %s due to %s", platformName, environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
 		} 
-		String msg = String.format("Failed to update platforms redundancy for environment with name %s due to null response", environmentName);
+		String msg = String.format("Failed to update platforms %s redundancy for environment %s due to null response", platformName, environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
 	
@@ -1527,13 +1528,11 @@ public class Transition extends APIClient {
 			if (response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				return response.getBody().as(CiResource.class);
 			} else {
-				String msg = String.format("Failed to update platforms cloud scale with cloud id %s due to %s", cloudId,
-						response.getStatusLine());
+				String msg = String.format("Failed to update platforms %s cloud scale with cloud id %s for environment %s due to %s", platformName, cloudId, environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
 		}
-		String msg = String.format("Failed to update platforms cloud scale with cloud id %s due to null response",
-				cloudId);
+		String msg = String.format("Failed to update platforms %s cloud scale with cloud id for %s environment %s due to null response", platformName, cloudId, environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
 	
@@ -1558,11 +1557,11 @@ public class Transition extends APIClient {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				return JsonUtil.toObject(response.getBody().asString(), new TypeReference<List<CiResource>>(){});
 			} else {
-				String msg = String.format("Failed to list relay due to %s", response.getStatusLine());
+				String msg = String.format("Failed to list relay for environment %s due to %s", environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
 		} 
-		String msg = "Failed to list relay due to null response";
+		String msg = String.format("Failed to list relay for environment %s due to null response", environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
 	
@@ -1592,11 +1591,11 @@ public class Transition extends APIClient {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				return response.getBody().as(CiResource.class);
 			} else {
-				String msg = String.format("Failed to get relay with name %s due to %s", relayName, response.getStatusLine());
+				String msg = String.format("Failed to get relay %s for environment %s due to %s", relayName, environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
 		} 
-		String msg = String.format("Failed to get relay with name %s due to null response", relayName);
+		String msg = String.format("Failed to get relay %s for environment %s due to null response", relayName, environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
 	
@@ -1676,11 +1675,11 @@ public class Transition extends APIClient {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				return response.getBody().as(CiResource.class);
 			} else {
-				String msg = String.format("Failed to create relay with name %s due to %s", relayName, response.getStatusLine());
+				String msg = String.format("Failed to create relay %s for environment %s due to %s", relayName, environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
 		} 
-		String msg = String.format("Failed to create relay with name %s due to null response", relayName);
+		String msg = String.format("Failed to create relay with name %s for environment %s due to null response", relayName, environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
 	
@@ -1747,11 +1746,11 @@ public class Transition extends APIClient {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				return response.getBody().as(CiResource.class);
 			} else {
-				String msg = String.format("Failed to update relay with name %s due to %s", relayName, response.getStatusLine());
+				String msg = String.format("Failed to update relay %s for environment %s due to %s", relayName, environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
 		} 
-		String msg = String.format("Failed to update relay with name %s due to null response", relayName);
+		String msg = String.format("Failed to update relay %s for environment %s due to null response", relayName, environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
 }
