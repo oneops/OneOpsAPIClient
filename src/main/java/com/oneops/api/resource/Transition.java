@@ -607,7 +607,13 @@ public class Transition extends APIClient {
 		Response response = request.queryParam("rfcId", rfcId).get(transitionEnvUri + environmentName + IConstants.DEPLOYMENTS_URI + deploymentId + "/log_data");
 		if(response != null) {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
-				return response.getBody().as(Log.class);
+				List<Log> logs = JsonUtil.toObject(response.getBody().asString(), new TypeReference<List<Log>>(){});
+				if(logs != null && logs.size() > 0) {
+					return logs.get(0);
+				} else {
+					String msg = String.format("Failed to get deployment logs for environment %s, deployment id %s and rfcId %s due to %s", environmentName, deploymentId, rfcId, response.getStatusLine());
+					throw new OneOpsClientAPIException(msg);
+				}
 			} else {
 				String msg = String.format("Failed to get deployment logs for environment %s, deployment id %s and rfcId %s due to %s", environmentName, deploymentId, rfcId, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
