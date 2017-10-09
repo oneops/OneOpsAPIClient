@@ -7,6 +7,7 @@ import java.util.Map;
 import org.json.JSONObject;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.base.Strings;
 import com.jayway.restassured.response.Response;
 import com.jayway.restassured.specification.RequestSpecification;
 import com.oneops.api.APIClient;
@@ -144,6 +145,60 @@ public class Assembly extends APIClient {
 		throw new OneOpsClientAPIException(msg);
 	}
 	
+	/**
+	 * Clones assembly @toAssembly from a given @fromAssembly
+	 * 
+	 * @param fromOrg {mandatory} 
+	 * @param toOrg
+	 * @param fromAssembly {mandatory}
+	 * @param toAssembly {mandatory}
+	 * @param description
+	 * @return
+	 * @throws OneOpsClientAPIException
+	 */
+	public CiResource cloneAssembly(String fromOrg, String toOrg, String fromAssembly, String toAssembly, String description) throws OneOpsClientAPIException{
+		ResourceObject ro = new ResourceObject();
+		Map<String ,String> properties= new HashMap<String ,String>();
+		
+		if(Strings.isNullOrEmpty(fromOrg)){
+			String msg = "Missing organization name to clone assembly from";
+			throw new OneOpsClientAPIException(msg);
+		}
+		if(Strings.isNullOrEmpty(toOrg)) {
+			toOrg = fromOrg;
+		}
+		if(Strings.isNullOrEmpty(fromAssembly)){
+			String msg = "Missing assembly name to be cloned";
+			throw new OneOpsClientAPIException(msg);
+		}
+		if(Strings.isNullOrEmpty(toAssembly)){
+			String msg = "Missing assembly name to be created";
+			throw new OneOpsClientAPIException(msg);
+		}
+		
+		properties.put("ciName", toAssembly);
+		properties.put("to_org", toOrg);
+		properties.put("description", description);
+		properties.put("org_name", fromOrg);
+		properties.put("id", fromAssembly);
+		ro.setProperties(properties);
+		
+		RequestSpecification request = createRequest();
+		JSONObject jsonObject = JsonUtil.createJsonObject(ro,null);
+		
+		Response response = request.body(jsonObject.toString()).post(IConstants.ASSEMBLY_URI  + fromAssembly +  "/clone");
+		
+		if(response != null) {
+			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+				return response.getBody().as(CiResource.class);
+			} else {
+				String msg = String.format("Failed to clone assembly with name %s due to %s", fromAssembly, response.getStatusLine());
+				throw new OneOpsClientAPIException(msg);
+			}
+		} 
+		String msg = String.format("Failed to clone assembly with name %s due to null response", fromAssembly);
+		throw new OneOpsClientAPIException(msg);
+	}
 	
 	/**
 	 * Updates assembly for the given @assemblyName
