@@ -506,7 +506,25 @@ public class Design extends APIClient {
 				attr.putAll(attributes);
 			}
 			
+			Map<String, String> ownerProps = Maps.newHashMap();
+			//Add existing attrProps to retain locking of attributes 
+			AttrProps attrProps = componentDetails.getAttrProps();
+			if(attrProps != null && attrProps.getAdditionalProperties() != null && attrProps.getAdditionalProperties().size() > 0 && attrProps.getAdditionalProperties().get("owner") != null) {
+				@SuppressWarnings("unchecked")
+				Map<String, String> ownersMap = (Map<String, String>) attrProps.getAdditionalProperties().get("owner");
+				for(Entry<String, String> entry : ownersMap.entrySet()) {
+					ownerProps.put(entry.getKey(), entry.getValue());
+				}
+			}
+			
+			//Add updated attributes to attrProps to lock them
+			for(Entry<String, String> entry :  attributes.entrySet()) {
+				ownerProps.put(entry.getKey(), "design");
+			}
+			
 			ro.setAttributes(attr);
+			ro.setOwnerProps(ownerProps);
+			
 			JSONObject jsonObject = JsonUtil.createJsonObject(ro , "cms_dj_ci");
  			Response response = request.body(jsonObject.toString()).put(designURI + IConstants.PLATFORM_URI + platformName + IConstants.COMPONENT_URI + ciId);
 			if(response != null) {
