@@ -15,6 +15,7 @@ import com.oneops.api.OOInstance;
 import com.oneops.api.ResourceObject;
 import com.oneops.api.exception.OneOpsClientAPIException;
 import com.oneops.api.resource.model.CiResource;
+import com.oneops.api.resource.model.Team;
 import com.oneops.api.util.IConstants;
 import com.oneops.api.util.JsonUtil;
 
@@ -48,6 +49,33 @@ public class Assembly extends APIClient {
 			}
 		} 
 		String msg = String.format("Failed to get assembly with name %s due to null response", assemblyName);
+		throw new OneOpsClientAPIException(msg);
+	}
+	
+	/**
+	 * List teams for the given assembly
+	 * 
+	 * @param assemblyName
+	 * @return
+	 * @throws OneOpsClientAPIException
+	 */
+	public List<Team> listAssemblyTeams(String assemblyName) throws OneOpsClientAPIException {
+		if(assemblyName == null || assemblyName.length() == 0) {
+			String msg = "Missing assembly name to fetch details";
+			throw new OneOpsClientAPIException(msg);
+		}
+		
+		RequestSpecification request = createRequest();
+		Response response = request.get(IConstants.ASSEMBLY_URI + assemblyName + "/teams");
+		if(response != null) {
+			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+				return JsonUtil.toObject(response.getBody().asString(), new TypeReference<List<Team>>(){});
+			} else {
+				String msg = String.format("Failed to get assembly team list with name %s due to %s", assemblyName, response.getStatusLine());
+				throw new OneOpsClientAPIException(msg);
+			}
+		} 
+		String msg = String.format("Failed to get assembly team list with name %s due to null response", assemblyName);
 		throw new OneOpsClientAPIException(msg);
 	}
 	
