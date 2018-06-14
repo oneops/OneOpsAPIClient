@@ -13,6 +13,8 @@ public interface IConstants {
 	static String SERVICE_URI = "/services/";
 	static String ACCOUNT_URI = "/account/organizations/";
 	static String ORGANIZATION_URI = "/organization/";
+	static String TEAM_URI = "teams/";
+	static String MEMBER_URI = "/members/";
 	static String VARIABLES_URI = "/variables/";
 	static String ATTACHMENTS_URI = "/attachments/";
 	static String ACTIONS_URI = "/actions/";
