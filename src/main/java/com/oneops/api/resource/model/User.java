@@ -22,6 +22,10 @@ public class User {
 	private Date updated;
 	@JsonProperty("organization")
 	private Organization organization;
+	@JsonProperty("sign_in_count")
+	private int signInCount;
+	@JsonProperty("current_sign_in_at")
+	private Date currentSignInAt;
 	public String getId() {
 		return id;
 	}
@@ -63,5 +67,17 @@ public class User {
 	}
 	public void setOrganization(Organization organization) {
 		this.organization = organization;
+	}
+	public int getSignInCount() {
+		return signInCount;
+	}
+	public void setSignInCount(int signInCount) {
+		this.signInCount = signInCount;
+	}
+	public Date getCurrentSignInAt() {
+		return currentSignInAt;
+	}
+	public void setCurrentSignInAt(Date currentSignInAt) {
+		this.currentSignInAt = currentSignInAt;
 	}
 }
