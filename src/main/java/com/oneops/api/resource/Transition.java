@@ -567,7 +567,7 @@ public class Transition extends APIClient {
 	 * @param environmentName
 	 * @param deploymentId
 	 * @param releaseId
-	 * @return
+	 * @return @{@link Deployment}
 	 * @throws OneOpsClientAPIException
 	 */
 	public Deployment pauseDeployment(String environmentName, Long deploymentId, Long releaseId) throws OneOpsClientAPIException {
