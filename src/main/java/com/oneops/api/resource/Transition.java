@@ -560,6 +560,19 @@ public class Transition extends APIClient {
 	public Deployment cancelDeployment(String environmentName, Long deploymentId, Long releaseId) throws OneOpsClientAPIException {
 		return updateDeploymentStatus(environmentName, deploymentId, releaseId, "canceled");
 	}
+
+	/**
+	 * Pause an active deployment
+	 *
+	 * @param environmentName
+	 * @param deploymentId
+	 * @param releaseId
+	 * @return
+	 * @throws OneOpsClientAPIException
+	 */
+	public Deployment pauseDeployment(String environmentName, Long deploymentId, Long releaseId) throws OneOpsClientAPIException {
+		return updateDeploymentStatus(environmentName, deploymentId, releaseId, "paused");
+	}
 	
 	
 	public DeploymentRFC getDeployment(String environmentName, Long deploymentId) throws OneOpsClientAPIException {
