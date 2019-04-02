@@ -52,6 +52,33 @@ public class Cloud extends APIClient {
 		String msg = String.format("Failed to get cloud with name %s due to null response", cloudName);
 		throw new OneOpsClientAPIException(msg);
 	}
+
+	/**
+	 * Lists all zones for a given cloudName
+	 *
+	 * @param cloudName
+	 * @return
+	 * @throws OneOpsClientAPIException
+	 */
+	public List<CiResource> listZones(String cloudName) throws OneOpsClientAPIException {
+		if(cloudName == null || cloudName.length() == 0) {
+			String msg = "Missing cloud name to fetch details";
+			throw new OneOpsClientAPIException(msg);
+		}
+
+		RequestSpecification request = createRequest();
+		Response response = request.get(IConstants.CLOUDS_URI + cloudName + "/zones");
+		if(response != null) {
+			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+				return JsonUtil.toObject(response.getBody().asString(), new TypeReference<List<CiResource>>(){});
+			} else {
+				String msg = String.format("Failed to get list of zones of cloud %s due to %s", cloudName, response.getStatusLine());
+				throw new OneOpsClientAPIException(msg);
+			}
+		}
+		String msg = String.format("Failed to get list of zones of cloud %s due to null response", cloudName);
+		throw new OneOpsClientAPIException(msg);
+	}
 	
 	/**
 	 * Lists all the clouds
