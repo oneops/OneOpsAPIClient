@@ -34,12 +34,12 @@ import com.oneops.api.util.IConstants;
 import com.oneops.api.util.JsonUtil;
 
 public class Transition extends APIClient {
-	
+
 	private static final Logger LOG = LoggerFactory.getLogger(Transition.class);
 	private String transitionEnvUri;
 	private OOInstance instance;
 	private String assemblyName;
-	
+
 	public Transition(OOInstance instance, String assemblyName) throws OneOpsClientAPIException {
 		super(instance);
 		if(assemblyName == null || assemblyName.length() == 0) {
@@ -50,10 +50,10 @@ public class Transition extends APIClient {
 		this.instance = instance;
 		transitionEnvUri = IConstants.ASSEMBLY_URI + assemblyName + IConstants.TRANSITION_URI + IConstants.ENVIRONMENT_URI;
 	}
-	
+
 	/**
 	 * Fetches specific environment details
-	 * 
+	 *
 	 * @param environmentName
 	 * @return
 	 * @throws OneOpsClientAPIException
@@ -63,7 +63,7 @@ public class Transition extends APIClient {
 			String msg = "Missing environment name to fetch details";
 			throw new OneOpsClientAPIException(msg);
 		}
-		
+
 		RequestSpecification request = createRequest();
 		Response response = request.get(transitionEnvUri + environmentName);
 		if(response != null) {
@@ -73,19 +73,19 @@ public class Transition extends APIClient {
 				String msg = String.format("Failed to get environment with name %s due to %s", environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
-		} 
+		}
 		String msg = String.format("Failed to get environment with name %s due to null response", environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
-	
+
+
 	/**
 	 * Lists all environments for a given assembly
 	 * @return
 	 * @throws OneOpsClientAPIException
 	 */
 	public List<CiResource> listEnvironments() throws OneOpsClientAPIException {
-		
+
 		RequestSpecification request = createRequest();
 		Response response = request.get(transitionEnvUri);
 		if(response != null) {
@@ -95,14 +95,14 @@ public class Transition extends APIClient {
 				String msg = String.format("Failed to list environments due to %s", response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
-		} 
+		}
 		String msg = "Failed to list environments due to null response";
 		throw new OneOpsClientAPIException(msg);
 	}
-	
+
 	/**
 	 * Creates environment within the given assembly
-	 * 
+	 *
 	 * @param environmentName {mandatory}
 	 * @param envprofile if exists
 	 * @param availability {mandatory}
@@ -114,12 +114,12 @@ public class Transition extends APIClient {
 	 * @return
 	 * @throws OneOpsClientAPIException
 	 */
-	public CiResource createEnvironment(String environmentName, String envprofile, Map<String ,String> attributes, 
+	public CiResource createEnvironment(String environmentName, String envprofile, Map<String ,String> attributes,
 			Map<String, String> platformAvailability , Map<String, Map<String, String>> cloudMap, String description) throws OneOpsClientAPIException {
-		
+
 		ResourceObject ro = new ResourceObject();
 		Map<String ,String> properties= new HashMap<String ,String>();
-		
+
 		if(environmentName != null && environmentName.length() > 0) {
 			properties.put("ciName", environmentName);
 		} else {
@@ -130,9 +130,9 @@ public class Transition extends APIClient {
 			String msg = "Missing availability in attributes map to create environment";
 			throw new OneOpsClientAPIException(msg);
 		}
-		
+
 		properties.put("nsPath", instance.getOrgname() + "/" + assemblyName);
-		
+
 		String availability = null;
 		if(attributes.containsKey("availability")) {
 			availability = attributes.get("availability");
@@ -140,18 +140,18 @@ public class Transition extends APIClient {
 			String msg = "Missing availability in attributes map to create environment";
 			throw new OneOpsClientAPIException(msg);
 		}
-		
+
 		if(attributes.containsKey("global_dns")) {
 			attributes.put("global_dns", String.valueOf(attributes.get("global_dns")));
 		}
-		
+
 		ro.setProperties(properties);
 		attributes.put("profile", envprofile);
 		attributes.put("description", description);
 		String subdomain = environmentName + "." + assemblyName + "." + instance.getOrgname();
 		attributes.put("subdomain", subdomain);
 		ro.setAttributes(attributes);
-		
+
 		RequestSpecification request = createRequest();
 		JSONObject jsonObject = JsonUtil.createJsonObject(ro , "cms_ci");
 		if(platformAvailability == null || platformAvailability.size() == 0) {
@@ -165,15 +165,15 @@ public class Transition extends APIClient {
 			}
 		}
 		jsonObject.put("platform_availability", platformAvailability);
-		
+
 		if(cloudMap == null || cloudMap.size() == 0) {
 			String msg = "Missing clouds map to create environment";
 			throw new OneOpsClientAPIException(msg);
 		}
 		jsonObject.put("clouds", cloudMap);
-		
+
 		Response response = request.body(jsonObject.toString()).post(transitionEnvUri);
-		
+
 		if(response != null) {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				return response.getBody().as(CiResource.class);
@@ -181,22 +181,22 @@ public class Transition extends APIClient {
 				String msg = String.format("Failed to create environment with name %s due to %s", environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
-		} 
+		}
 		String msg = String.format("Failed to create environment with name %s due to null response", environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
+
 
 	/**
 	 * Commits environment open releases
-	 * 
+	 *
 	 * @param environmentName {mandatory}
 	 * @param excludePlatforms
 	 * @return
 	 * @throws OneOpsClientAPIException
 	 */
 	public Release commitEnvironment(String environmentName, List<Long> excludePlatforms, String comment) throws OneOpsClientAPIException {
-		
+
 		RequestSpecification request = createRequest();
 		JSONObject jo = new JSONObject();
 		if(excludePlatforms != null && excludePlatforms.size() > 0) {
@@ -214,7 +214,7 @@ public class Transition extends APIClient {
 		Response response = request.body(jo.toString()).post(transitionEnvUri + environmentName + "/commit");
 		if(response != null) {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
-				
+
 				response = request.get(transitionEnvUri + environmentName);
 				String envState = response.getBody().jsonPath().get("ciState");
 				//wait for deployment plan to generate
@@ -227,35 +227,35 @@ public class Transition extends APIClient {
 					}
 					envState = response.getBody().jsonPath().get("ciState");
 				} while(response != null && "locked".equalsIgnoreCase(envState));
-				
+
 				String comments = response.getBody().jsonPath().getString("comments");
 				if(comments != null && comments.startsWith("ERROR:")) {
 					String msg = String.format("Failed to commit environment due to %s",  comments);
 					throw new OneOpsClientAPIException(msg);
 				}
-				
+
 				return response.getBody().as(Release.class);
-				
+
 			} else {
 				String msg = String.format("Failed to commit environment %s due to %s", environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
-		} 
+		}
 		String msg = String.format("Failed to commit environment %s due to null response", environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
+
 	/**
 	 * Deploy an already generated deployment plan
-	 * 
+	 *
 	 * @param environmentName
 	 * @return
 	 * @throws OneOpsClientAPIException
 	 */
 	public Deployment deploy(String environmentName, String comments) throws OneOpsClientAPIException {
-		
+
 		RequestSpecification request = createRequest();
-		
+
 		 Release bomRelease = getBomRelease(environmentName);
 		 Long releaseId = bomRelease.getReleaseId();
 		 String nsPath = bomRelease.getNsPath();
@@ -284,14 +284,14 @@ public class Transition extends APIClient {
 			String msg = String.format("Failed to find release id to be deployed for environment %s", environmentName);
 			throw new OneOpsClientAPIException(msg);
 		}
-				
-			
+
+
 	}
-	
-	
+
+
 	/**
 	 * Fetches deployment status for the given assembly/environment
-	 * 
+	 *
 	 * @param environmentName
 	 * @param deploymentId
 	 * @return
@@ -306,7 +306,7 @@ public class Transition extends APIClient {
 			String msg = "Missing deployment to fetch details";
 			throw new OneOpsClientAPIException(msg);
 		}
-		
+
 		RequestSpecification request = createRequest();
 		Response response = request.get(transitionEnvUri + environmentName + IConstants.DEPLOYMENTS_URI + deploymentId + "/status");
 		if(response != null) {
@@ -316,14 +316,14 @@ public class Transition extends APIClient {
 				String msg = String.format("Failed to get deployment status for environment %s with deployment Id %s due to %s", environmentName, deploymentId, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
-		} 
+		}
 		String msg = String.format("Failed to get deployment status for environment %s with deployment Id %s due to null response", environmentName, deploymentId);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
+
 	/**
 	 * Fetches latest deployment for the given assembly/environment
-	 * 
+	 *
 	 * @param environmentName
 	 * @return
 	 * @throws OneOpsClientAPIException
@@ -333,7 +333,7 @@ public class Transition extends APIClient {
 			String msg = "Missing environment name to fetch details";
 			throw new OneOpsClientAPIException(msg);
 		}
-		
+
 		RequestSpecification request = createRequest();
 		Response response = request.get(transitionEnvUri + environmentName + IConstants.DEPLOYMENTS_URI + "latest" );
 		if(response != null) {
@@ -343,15 +343,15 @@ public class Transition extends APIClient {
 				String msg = String.format("Failed to get latest deployment for environment %s due to %s", environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
-		} 
+		}
 		String msg = String.format("Failed to get latest deployment for environment %s due to null response", environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
-	
+
+
 	/**
 	 * Discard already generated deployment plan
-	 * 
+	 *
 	 * @param environmentName
 	 * @return
 	 * @throws OneOpsClientAPIException
@@ -361,9 +361,9 @@ public class Transition extends APIClient {
 			String msg = "Missing environment name to fetch details";
 			throw new OneOpsClientAPIException(msg);
 		}
-		
+
 		RequestSpecification request = createRequest();
-		
+
 		Release bomRelease = getBomRelease(environmentName);
 		if(bomRelease != null) {
 			long releaseId = bomRelease.getReleaseId();
@@ -375,19 +375,19 @@ public class Transition extends APIClient {
 					String msg = String.format("Failed to discard deployment plan for environment %s due to %s", environmentName, response.getStatusLine());
 					throw new OneOpsClientAPIException(msg);
 				}
-			} 
+			}
 		} else {
 			String msg = String.format("Failed to discard deployment plan for environment %s due to no open bom", environmentName);
 			throw new OneOpsClientAPIException(msg);
 		}
-		
+
 		String msg = String.format("Failed to discard deployment plan for environment %s due to null response", environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
+
 	/**
 	 * Discard uncommitted changes for the given {environmentName}
-	 * 
+	 *
 	 * @param environmentName
 	 * @return
 	 * @throws OneOpsClientAPIException
@@ -397,7 +397,7 @@ public class Transition extends APIClient {
 			String msg = "Missing environment name to fetch details";
 			throw new OneOpsClientAPIException(msg);
 		}
-		
+
 		RequestSpecification request = createRequest();
 		Response response = request.body("").post(transitionEnvUri + environmentName + "/discard" );
 		if(response != null) {
@@ -407,15 +407,15 @@ public class Transition extends APIClient {
 				String msg = String.format("Failed to discard changes for environment %s due to %s", environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
-		} 
-		
+		}
+
 		String msg = String.format("Failed to discard changes for environment %s due to null response", environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
+
 	/**
 	 * Disable all platforms for the given assembly/environment
-	 * 
+	 *
 	 * @param environmentName
 	 * @return
 	 * @throws OneOpsClientAPIException
@@ -425,13 +425,13 @@ public class Transition extends APIClient {
 			String msg = "Missing environment name to disable all platforms";
 			throw new OneOpsClientAPIException(msg);
 		}
-		
+
 		List<CiResource> ps = listPlatforms(environmentName);
 		List<Long> platformIds = Lists.newArrayList();
 		for (CiResource ciResource : ps) {
 			platformIds.add(ciResource.getCiId());
 		}
-		
+
 		RequestSpecification request = createRequest();
 		Response response = request.queryParam("platformCiIds[]", platformIds).put(transitionEnvUri + environmentName + "/disable" );
 		if(response != null) {
@@ -441,14 +441,14 @@ public class Transition extends APIClient {
 				String msg = String.format("Failed to disable platforms for environment %s due to %s", environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
-		} 
+		}
 		String msg = String.format("Failed to disable platforms for environment %s due to null response", environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
+
 	/**
 	 * Disable selected list of platforms for the given assembly/environment
-	 * 
+	 *
 	 * @param environmentName
 	 * @param platformNames
 	 * @param status disable/enable
@@ -468,7 +468,7 @@ public class Transition extends APIClient {
 			String msg = "Missing platform name list to be updated";
 			throw new OneOpsClientAPIException(msg);
 		}
-		
+
 		List<CiResource> ps = listPlatforms(environmentName);
 		List<Long> platformIds = Lists.newArrayList();
 		for (CiResource ciResource : ps) {
@@ -476,7 +476,7 @@ public class Transition extends APIClient {
 				platformIds.add(ciResource.getCiId());
 			}
 		}
-		
+
 		RequestSpecification request = createRequest();
 		Response response = request.queryParam("platformCiIds[]", platformIds).put(transitionEnvUri + environmentName + "/" + status );
 		if(response != null) {
@@ -486,14 +486,14 @@ public class Transition extends APIClient {
 				String msg = String.format("Failed to update platforms %s status to %s for environment %s due to %s", platformNames, status, environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
-		} 
+		}
 		String msg = String.format("Failed to update platforms %s status to %s for environment %s due to null response", platformNames, status, environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
+
 	/**
 	 * Fetches latest release for the given assembly/environment
-	 * 
+	 *
 	 * @param environmentName
 	 * @return
 	 * @throws OneOpsClientAPIException
@@ -503,7 +503,7 @@ public class Transition extends APIClient {
 			String msg = "Missing environment name to fetch details";
 			throw new OneOpsClientAPIException(msg);
 		}
-		
+
 		RequestSpecification request = createRequest();
 		Response response = request.get(transitionEnvUri + environmentName + IConstants.RELEASES_URI + "latest" );
 		if(response != null) {
@@ -513,15 +513,15 @@ public class Transition extends APIClient {
 				String msg = String.format("Failed to get latest releases for environment %s due to %s", environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
-		} 
+		}
 		String msg = String.format("Failed to get latest releases for environment %s due to null response", environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
-	
+
+
 	/**
 	 * Fetches bom release for the given assembly/environment
-	 * 
+	 *
 	 * @param environmentName
 	 * @return
 	 * @throws OneOpsClientAPIException
@@ -531,7 +531,7 @@ public class Transition extends APIClient {
 			String msg = "Missing environment name to fetch details";
 			throw new OneOpsClientAPIException(msg);
 		}
-		
+
 		RequestSpecification request = createRequest();
 		Response response = request.get(transitionEnvUri + environmentName + IConstants.RELEASES_URI + "bom" );
 		if(response != null) {
@@ -542,15 +542,15 @@ public class Transition extends APIClient {
 				LOG.warn(msg);
 				return null;
 			}
-		} 
+		}
 		String msg = String.format("Failed to get bom releases for environment %s due to null response", environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
-	
+
+
 	/**
 	 * Cancels a failed/paused deployment
-	 * 
+	 *
 	 * @param environmentName
 	 * @param deploymentId
 	 * @param releaseId
@@ -573,19 +573,19 @@ public class Transition extends APIClient {
 	public Deployment pauseDeployment(String environmentName, Long deploymentId, Long releaseId) throws OneOpsClientAPIException {
 		return updateDeploymentStatus(environmentName, deploymentId, releaseId, "paused");
 	}
-	
-	
+
+
 	public DeploymentRFC getDeployment(String environmentName, Long deploymentId) throws OneOpsClientAPIException {
 		if(environmentName == null || environmentName.length() == 0) {
 			String msg = "Missing environment name to fetch details";
 			throw new OneOpsClientAPIException(msg);
 		}
-		
+
 		if(deploymentId == null) {
 			String msg = "Missing deployment Id to fetch details";
 			throw new OneOpsClientAPIException(msg);
 		}
-		
+
 		RequestSpecification request = createRequest();
 		Response response = request.get(transitionEnvUri + environmentName + IConstants.DEPLOYMENTS_URI + deploymentId );
 		if(response != null) {
@@ -595,27 +595,27 @@ public class Transition extends APIClient {
 				String msg = String.format("Failed to get deployment details for environment %s for id %s due to %s", environmentName, deploymentId, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
-		} 
+		}
 		String msg = String.format("Failed to get deployment details for environment %s for id %s due to null response", environmentName, deploymentId);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
+
 	public Log getDeploymentRfcLog(String environmentName, Long deploymentId, Long rfcId) throws OneOpsClientAPIException {
 		if(environmentName == null || environmentName.length() == 0) {
 			String msg = "Missing environment name to fetch details";
 			throw new OneOpsClientAPIException(msg);
 		}
-		
+
 		if(deploymentId == null) {
 			String msg = "Missing deployment Id to fetch details";
 			throw new OneOpsClientAPIException(msg);
 		}
-		
+
 		if(rfcId == null ) {
 			String msg = "Missing rfc Id to fetch details";
 			throw new OneOpsClientAPIException(msg);
 		}
-		
+
 		RequestSpecification request = createRequest();
 		Response response = request.queryParam("rfcId", rfcId).get(transitionEnvUri + environmentName + IConstants.DEPLOYMENTS_URI + deploymentId + "/log_data");
 		if(response != null) {
@@ -631,14 +631,14 @@ public class Transition extends APIClient {
 				String msg = String.format("Failed to get deployment logs for environment %s, deployment id %s and rfcId %s due to %s", environmentName, deploymentId, rfcId, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
-		} 
+		}
 		String msg = String.format("Failed to get deployment logs for environment %s, deployment id %s and rfcId %s due to null response", environmentName, deploymentId, rfcId);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
+
 	/**
 	 * Approve a deployment
-	 * 
+	 *
 	 * @param environmentName
 	 * @param deploymentId
 	 * @param releaseId
@@ -648,10 +648,10 @@ public class Transition extends APIClient {
 	public Deployment approveDeployment(String environmentName, Long deploymentId, Long releaseId) throws OneOpsClientAPIException {
 		return updateDeploymentStatus(environmentName, deploymentId, releaseId, "active");
 	}
-	
+
 	/**
 	 * Retry a deployment
-	 * 
+	 *
 	 * @param environmentName
 	 * @param deploymentId
 	 * @param releaseId
@@ -661,10 +661,10 @@ public class Transition extends APIClient {
 	public Deployment retryDeployment(String environmentName, Long deploymentId, Long releaseId) throws OneOpsClientAPIException {
 		return updateDeploymentStatus(environmentName, deploymentId, releaseId, "active");
 	}
-	
+
 	/**
 	 * Update deployment state
-	 * 
+	 *
 	 * @param environmentName
 	 * @param deploymentId
 	 * @param releaseId
@@ -680,16 +680,16 @@ public class Transition extends APIClient {
 			String msg = "Missing deployment to fetch details";
 			throw new OneOpsClientAPIException(msg);
 		}
-		
+
 		RequestSpecification request = createRequest();
-		
+
 		Map<String ,String> properties= new HashMap<String ,String>();
 		properties.put("deploymentState", newstate);
 		properties.put("releaseId", String.valueOf(releaseId));
 		ResourceObject ro = new ResourceObject();
 		ro.setProperties(properties);
 		JSONObject jsonObject = JsonUtil.createJsonObject(ro , "cms_deployment");
-		
+
 		Response response = request.body(jsonObject.toString()).put(transitionEnvUri + environmentName + IConstants.DEPLOYMENTS_URI + deploymentId);
 		if(response != null) {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
@@ -698,14 +698,14 @@ public class Transition extends APIClient {
 				String msg = String.format("Failed to update deployment state to %s for environment %s with deployment Id %s due to %s", newstate, environmentName, deploymentId, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
-		} 
+		}
 		String msg = String.format("Failed to update deployment state to %s for environment %s with deployment Id %s due to null response", newstate, environmentName, deploymentId);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
+
 	/**
 	 * Deletes the given environment
-	 * 
+	 *
 	 * @param environmentName
 	 * @return
 	 * @throws OneOpsClientAPIException
@@ -715,7 +715,7 @@ public class Transition extends APIClient {
 			String msg = "Missing environment name to delete";
 			throw new OneOpsClientAPIException(msg);
 		}
-		
+
 		RequestSpecification request = createRequest();
 		Response response = request.delete(transitionEnvUri + environmentName);
 		if(response != null) {
@@ -725,14 +725,14 @@ public class Transition extends APIClient {
 				String msg = String.format("Failed to delete environment with name %s due to %s", environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
-		} 
+		}
 		String msg = String.format("Failed to delete environment with name %s due to null response", environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
+
 	/**
 	 * List platforms for a given assembly/environment
-	 * 
+	 *
 	 * @param environmentName
 	 * @return
 	 * @throws OneOpsClientAPIException
@@ -742,7 +742,7 @@ public class Transition extends APIClient {
 			String msg = "Missing environment name list platforms";
 			throw new OneOpsClientAPIException(msg);
 		}
-		
+
 		RequestSpecification request = createRequest();
 		Response response = request.get(transitionEnvUri + environmentName + IConstants.PLATFORM_URI);
 		if(response != null) {
@@ -752,14 +752,14 @@ public class Transition extends APIClient {
 				String msg = String.format("Failed to get list of platforms for environemnt %s due to %s", environmentName,response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
-		} 
+		}
 		String msg = String.format("Failed to get list of platforms for environemnt %s due to null response", environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
+
 	/**
 	 * Get platform details for a given assembly/environment
-	 * 
+	 *
 	 * @param environmentName
 	 * @param platformName
 	 * @return
@@ -783,14 +783,14 @@ public class Transition extends APIClient {
 				String msg = String.format("Failed to get platform %s details for environment %s due to %s", platformName, environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
-		} 
+		}
 		String msg = String.format("Failed to get platform %s details for environment %s due to null response", platformName, environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
+
 	/**
 	 * List platform components for a given assembly/environment/platform
-	 * 
+	 *
 	 * @param environmentName
 	 * @param platformName
 	 * @return
@@ -814,14 +814,14 @@ public class Transition extends APIClient {
 				String msg = String.format("Failed to list components for platform %s environment %s due to %s", platformName, environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
-		} 
+		}
 		String msg = String.format("Failed to list components for platform %s environment %s due to null response", platformName, environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
+
 	/**
 	 * Get platform component details for a given assembly/environment/platform
-	 * 
+	 *
 	 * @param environmentName
 	 * @param platformName
 	 * @param componentName
@@ -850,14 +850,14 @@ public class Transition extends APIClient {
 				String msg = String.format("Failed to get enviornment %s platform %s component %s details due to %s", environmentName, platformName, componentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
-		} 
+		}
 		String msg = String.format("Failed to get enviornment %s platform %s component %s details due to null response", environmentName, platformName, componentName);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
+
 	/**
 	 * Update component attributes for a given assembly/environment/platform/component
-	 * 
+	 *
 	 * @param environmentName
 	 * @param platformName
 	 * @param componentName
@@ -882,20 +882,20 @@ public class Transition extends APIClient {
 			String msg = "Missing attributes list to be updated";
 			throw new OneOpsClientAPIException(msg);
 		}
-		
+
 		CiResource componentDetails = getPlatformComponent(environmentName, platformName, componentName);
 		if(componentDetails != null) {
 			ResourceObject ro = new ResourceObject();
-			
+
 			Long ciId = componentDetails.getCiId();
-			
+
 			Map<String, String> attr = Maps.newHashMap();
 			//Add ciAttributes to be updated
 			if(attributes != null && attributes.size() > 0)
 				attr.putAll(attributes);
-			
+
 			Map<String, String> ownerProps = Maps.newHashMap();
-			//Add existing attrProps to retain locking of attributes 
+			//Add existing attrProps to retain locking of attributes
 			AttrProps attrProps = componentDetails.getAttrProps();
 			if(attrProps != null && attrProps.getAdditionalProperties() != null && attrProps.getAdditionalProperties().size() > 0 && attrProps.getAdditionalProperties().get("owner") != null) {
 				@SuppressWarnings("unchecked")
@@ -904,15 +904,15 @@ public class Transition extends APIClient {
 					ownerProps.put(entry.getKey(), entry.getValue());
 				}
 			}
-			
+
 			//Add updated attributes to attrProps to lock them
 			for(Entry<String, String> entry :  attributes.entrySet()) {
 				ownerProps.put(entry.getKey(), "manifest");
 			}
-			
+
 			ro.setAttributes(attr);
 			ro.setOwnerProps(ownerProps);
-			
+
 			RequestSpecification request = createRequest();
 			JSONObject jsonObject = JsonUtil.createJsonObject(ro , "cms_dj_ci");
  			Response response = request.body(jsonObject.toString()).put(transitionEnvUri + environmentName + IConstants.PLATFORM_URI + platformName + IConstants.COMPONENT_URI + ciId);
@@ -923,15 +923,15 @@ public class Transition extends APIClient {
 					String msg = String.format("Failed to get update component %s for platform %s environment %s due to %s", componentName, platformName, environmentName, response.getStatusLine());
 					throw new OneOpsClientAPIException(msg);
 				}
-			} 
+			}
 		}
 		String msg = String.format("Failed to get update component %s for platform %s environment %s due to null response", componentName, platformName, environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
+
 	/**
 	 * Fetch attachment details for an environment/platform/component
-	 * 
+	 *
 	 * @param environmentName
 	 * @param platformName
 	 * @param componentName
@@ -961,15 +961,15 @@ public class Transition extends APIClient {
 				String msg = String.format("Failed to get attachment %s details for component %s platform %s environment %s due to %s", attachmentName, componentName, platformName, environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
-		} 
+		}
 		String msg = String.format("Failed to get attachment %s details for component %s platform %s environment %s due to null response", attachmentName, componentName, platformName, environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
-	
+
+
 	/**
 	 * Update Attachment
-	 * 
+	 *
 	 *  Sample request for new attachment attributes
 	 * 	attributes.put("content", "content");
 		attributes.put("source", "source");
@@ -977,7 +977,7 @@ public class Transition extends APIClient {
 		attributes.put("exec_cmd", "exec_cmd");
 		attributes.put("run_on", "after-add,after-replace,after-update");
 		attributes.put("run_on_action", "[\"after-restart\"]");
-		
+
 	 * @param environmentName
 	 * @param platformName
 	 * @param componentName
@@ -1007,15 +1007,15 @@ public class Transition extends APIClient {
 			//nothing to be updated
 			return null;
 		}
-		
+
 		CiResource attachmentDetails = getPlatformComponentAttachment(environmentName, platformName, componentName, attachmentName);
 		if(attachmentDetails != null) {
 			ResourceObject ro = new ResourceObject();
-			
+
 			Long ciId = attachmentDetails.getCiId();
 			RequestSpecification request = createRequest();
-			
-			//Add existing ciAttributes 
+
+			//Add existing ciAttributes
 			CiAttributes ciAttributes = attachmentDetails.getCiAttributes();
 			Map<String, String> attr = Maps.newHashMap();
 			if(ciAttributes != null && ciAttributes.getAdditionalProperties() != null && ciAttributes.getAdditionalProperties().size() > 0) {
@@ -1023,13 +1023,13 @@ public class Transition extends APIClient {
 					attr.put(entry.getKey(), String.valueOf(entry.getValue()));
 				}
 			}
-			
+
 			//Add ciAttributes to be updated
 			if(attributes != null && attributes.size() > 0)
 				attr.putAll(attributes);
-			
+
 			Map<String, String> ownerProps = Maps.newHashMap();
-			//Add existing attrProps to retain locking of attributes 
+			//Add existing attrProps to retain locking of attributes
 			AttrProps attrProps = attachmentDetails.getAttrProps();
 			if(attrProps != null && attrProps.getAdditionalProperties() != null && attrProps.getAdditionalProperties().size() > 0 && attrProps.getAdditionalProperties().get("owner") != null) {
 				@SuppressWarnings("unchecked")
@@ -1038,16 +1038,16 @@ public class Transition extends APIClient {
 					ownerProps.put(entry.getKey(), entry.getValue());
 				}
 			}
-			
+
 			//Add updated attributes to attrProps to lock them
 			for(Entry<String, String> entry :  attributes.entrySet()) {
 				ownerProps.put(entry.getKey(), "manifest");
 			}
-			
+
 			ro.setOwnerProps(ownerProps);
 			ro.setAttributes(attr);
 			JSONObject jsonObject = JsonUtil.createJsonObject(ro , "cms_dj_ci");
- 			Response response = request.body(jsonObject.toString()).put(transitionEnvUri + environmentName + IConstants.PLATFORM_URI + platformName 
+ 			Response response = request.body(jsonObject.toString()).put(transitionEnvUri + environmentName + IConstants.PLATFORM_URI + platformName
  					+ IConstants.COMPONENT_URI + componentName + IConstants.ATTACHMENTS_URI + ciId);
 			if(response != null) {
 				if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
@@ -1056,15 +1056,15 @@ public class Transition extends APIClient {
 					String msg = String.format("Failed to get update attachment %s on component %s platform %s environemnt %s due to %s", attachmentName, componentName, platformName, environmentName, response.getStatusLine());
 					throw new OneOpsClientAPIException(msg);
 				}
-			} 
+			}
 		}
 		String msg = String.format("Failed to get update attachment %s on component %s platform %s environemnt %s due to null response", attachmentName, componentName, platformName, environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
+
 	/**
 	 * touch component
-	 * 
+	 *
 	 * @param environmentName
 	 * @param platformName
 	 * @param componentName
@@ -1084,12 +1084,12 @@ public class Transition extends APIClient {
 			String msg = "Missing component name to update component attributes";
 			throw new OneOpsClientAPIException(msg);
 		}
-		
+
 		RequestSpecification request = createRequest();
 		JSONObject jo = new JSONObject();
-		
+
 		Response response = request.body(jo.toString()).post(transitionEnvUri + environmentName + IConstants.PLATFORM_URI + platformName + IConstants.COMPONENT_URI + componentName + "/touch");
-		
+
 		if(response != null) {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				return response.getBody().as(CiResource.class);
@@ -1097,23 +1097,23 @@ public class Transition extends APIClient {
 				String msg = String.format("Failed to touch component %s for platform %s environment %s due to %s", componentName, platformName, environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
-		} 
+		}
 		String msg = String.format("Failed to touch component %s for platform %s environment %s due to null response", componentName, platformName, environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
+
 	/**
 	 * Pull latest design commits
-	 * 
+	 *
 	 * @param environmentName {mandatory}
 	 * @return
 	 * @throws OneOpsClientAPIException
 	 */
 	public CiResource pullDesign(String environmentName) throws OneOpsClientAPIException {
-		
+
 		RequestSpecification request = createRequest();
 		JSONObject jo = new JSONObject();
-		
+
 		Response response = request.body(jo.toString()).post(transitionEnvUri + environmentName + "/pull");
 		if(response != null) {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
@@ -1121,34 +1121,34 @@ public class Transition extends APIClient {
 				if(env == null || (env.getComments() != null && env.getComments().startsWith("ERROR:"))) {
 					String msg = String.format("Failed to pull design for environment %s due to %s", environmentName, env.getComments());
 					throw new OneOpsClientAPIException(msg);
-				} else 
+				} else
 					return env;
 			} else {
 				String msg = String.format("Failed to pull design for environment %s due to %s", environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
-		} 
+		}
 		String msg = String.format("Failed to pull design for environment %s due to null response", environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
+
 	/**
 	 * Use this pull design when new platform(s) or newer version of platform(s) is being added to the environment
-	 *  
+	 *
 	 * @param environmentName
 	 * @param platformAvailability
 	 * @return
 	 * @throws OneOpsClientAPIException
 	 */
 	public CiResource pullNewPlatform(String environmentName, Map<String, String> platformAvailability) throws OneOpsClientAPIException {
-		
+
 		RequestSpecification request = createRequest();
 		JSONObject jo = new JSONObject();
-		
+
 		if(platformAvailability == null || platformAvailability.size() == 0) {
 			Design design = new Design(instance, assemblyName);
 			List<CiResource> platforms = design.listPlatforms();
-			
+
 			CiResource env = getEnvironment(environmentName);
 			String availability = "single";
 			if(env != null && env.getCiAttributes() != null) {
@@ -1165,7 +1165,7 @@ public class Transition extends APIClient {
 			}
 		}
 		jo.put("platform_availability", platformAvailability);
-		
+
 		Response response = request.body(jo.toString()).post(transitionEnvUri + environmentName + "/pull");
 		if(response != null) {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
@@ -1173,20 +1173,20 @@ public class Transition extends APIClient {
 				if(env == null || (env.getComments() != null && env.getComments().startsWith("ERROR:"))) {
 					String msg = String.format("Failed to pull design for environment %s due to %s", environmentName, env.getComments());
 					throw new OneOpsClientAPIException(msg);
-				} else 
+				} else
 					return env;
 			} else {
 				String msg = String.format("Failed to pull design for environment %s due to %s", environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
-		} 
+		}
 		String msg = String.format("Failed to pull design for environment %s due to null response", environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
+
 	/**
 	 * List local variables for a given assembly/environment/platform
-	 * 
+	 *
 	 * @param environmentName
 	 * @param platformName
 	 * @return
@@ -1210,14 +1210,14 @@ public class Transition extends APIClient {
 				String msg = String.format("Failed to list local variables for platform %s environment %s due to %s", platformName, environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
-		} 
+		}
 		String msg = String.format("Failed to list local variables for platform %s environment %s due to null response", platformName, environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
+
 	/**
 	 * Update platform local variables for a given assembly/environment/platform
-	 * 
+	 *
 	 * @param environmentName
 	 * @param platformName
 	 * @param variables
@@ -1225,7 +1225,7 @@ public class Transition extends APIClient {
 	 * @return
 	 * @throws OneOpsClientAPIException
 	 */
-	 
+
 	public Boolean updatePlatformVariable(String environmentName, String platformName, String variableName, String variableValue, boolean isSecure) throws OneOpsClientAPIException {
 		if(environmentName == null || environmentName.length() == 0) {
 			String msg = "Missing environment name to update variables";
@@ -1243,13 +1243,13 @@ public class Transition extends APIClient {
 			String msg = "Missing variable value to be added";
 			throw new OneOpsClientAPIException(msg);
 		}
-		
+
 		RequestSpecification request = createRequest();
 		boolean success = false;
 			ResourceObject ro = new ResourceObject();
 			Map<String ,String> attributes = new HashMap<String ,String>();
 			Map<String, String> ownerProps = Maps.newHashMap();
-			
+
 			String uri = transitionEnvUri + environmentName + IConstants.PLATFORM_URI + platformName + IConstants.VARIABLES_URI + variableName;
 			Response response = request.get(uri);
 			if(response != null) {
@@ -1273,10 +1273,10 @@ public class Transition extends APIClient {
 						attributes.put("value", variableValue);
 						ownerProps.put("value", "manifest");
 					}
-					
+
 					ro.setOwnerProps(ownerProps);
 					ro.setAttributes(attributes);
-					
+
 					JSONObject jsonObject = JsonUtil.createJsonObject(ro , "cms_dj_ci");
 					if(response != null ) {
 						response = request.body(jsonObject.toString()).put(uri);
@@ -1287,7 +1287,7 @@ public class Transition extends APIClient {
 								String msg = String.format("Failed to update local variable %s with value %s for platform %s environment %s due to %s", variableName, variableValue, platformName, environmentName, response.getStatusLine());
 								throw new OneOpsClientAPIException(msg);
 							}
-						} 
+						}
 					}
 				} else {
 					success = true;
@@ -1296,16 +1296,16 @@ public class Transition extends APIClient {
 				String msg = String.format("Failed to update local variable %s with value %s for platform %s environment %s due to null response", variableName, variableValue, platformName, environmentName);
 				throw new OneOpsClientAPIException(msg);
 			}
-			
-		
+
+
 		return success;
 	}
-	
-	
+
+
 
 	/**
 	 * List global variables for a given assembly/environment
-	 * 
+	 *
 	 * @param environmentName
 	 * @return
 	 * @throws OneOpsClientAPIException
@@ -1324,14 +1324,14 @@ public class Transition extends APIClient {
 				String msg = String.format("Failed to list global variables of environment %s due to %s", environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
-		} 
+		}
 		String msg = String.format("Failed to list global variables of environment %s due to null response", environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
+
 	/**
 	 * Update global variables for a given assembly/environment
-	 * 
+	 *
 	 * @param environmentName
 	 * @param variables
 	 * @return
@@ -1355,7 +1355,7 @@ public class Transition extends APIClient {
 			ResourceObject ro = new ResourceObject();
 			Map<String ,String> attributes = new HashMap<String ,String>();
 			Map<String, String> ownerProps = Maps.newHashMap();
-			
+
 			String uri = transitionEnvUri + environmentName + IConstants.VARIABLES_URI + variableName;
 			Response response = request.get(uri);
 			if(response != null) {
@@ -1378,10 +1378,10 @@ public class Transition extends APIClient {
 						attributes.put("value", variableValue);
 						ownerProps.put("value", "manifest");
 					}
-						
+
 					ro.setOwnerProps(ownerProps);
 					ro.setAttributes(attributes);
-					
+
 					JSONObject jsonObject = JsonUtil.createJsonObject(ro , "cms_dj_ci");
 					response = request.body(jsonObject.toString()).put(uri);
 					if(response != null) {
@@ -1391,7 +1391,7 @@ public class Transition extends APIClient {
 							String msg = String.format("Failed to update global variable %s with value %s of environment %s due to %s", variableName, variableValue, environmentName, response.getStatusLine());
 							throw new OneOpsClientAPIException(msg);
 						}
-					} 
+					}
 				} else {
 					success = true;
 				}
@@ -1399,15 +1399,15 @@ public class Transition extends APIClient {
 				String msg = String.format("Failed to update global variable %s with value %s of environment %s due to null response", variableName, variableValue, environmentName);
 				throw new OneOpsClientAPIException(msg);
 			}
-			
-		
-		
+
+
+
 		return success;
 	}
-	
+
 	/**
 	 * Mark the input {#platformIdList} platforms for delete
-	 * 
+	 *
 	 * @param environmentName
 	 * @param platformIdList
 	 * @return
@@ -1418,16 +1418,16 @@ public class Transition extends APIClient {
 			String msg = "Missing environment name to disable platforms";
 			throw new OneOpsClientAPIException(msg);
 		}
-		
+
 		if(platformIdList == null || platformIdList.size() == 0) {
 			String msg = "Missing platforms list to be disabled";
 			throw new OneOpsClientAPIException(msg);
 		}
-		
+
 		RequestSpecification request = createRequest();
 		JSONObject jsonObject = new JSONObject();
 		jsonObject.put("platformCiIds", platformIdList);
-		
+
 		Response response = request.body(jsonObject.toString()).put(transitionEnvUri + environmentName + "/disable");
 		if(response != null) {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
@@ -1436,17 +1436,51 @@ public class Transition extends APIClient {
 				String msg = String.format("Failed to disable platforms for environment with name %s due to %s", environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
-		} 
+		}
 		String msg = String.format("Failed to disable platforms for environment with name %s due to null response", environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
+
+    /**
+     * Get redundancy configuration for a given platform
+     *
+     * @param environmentName
+     * @param platformName
+     * @return
+     * @throws OneOpsClientAPIException
+     */
+	public CiResource getPlatformRedundancyConfig(String environmentName, String platformName) throws OneOpsClientAPIException {
+		if(environmentName == null || environmentName.length() == 0) {
+			String msg = "Missing environment name to get redundancy configuration";
+			throw new OneOpsClientAPIException(msg);
+		}
+
+		if(platformName == null || platformName.length() == 0) {
+			String msg = "Missing platform name to get redundancy configuration";
+			throw new OneOpsClientAPIException(msg);
+		}
+
+		RequestSpecification request = createRequest();
+		Response response = request.get(transitionEnvUri + environmentName + IConstants.PLATFORM_URI + platformName + "/edit");
+		if(response != null) {
+			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+				return response.getBody().as(CiResource.class);
+			} else {
+				String msg = String.format("Failed to get redundancy configuration for platform %s due to %s", platformName, response.getStatusLine());
+				throw new OneOpsClientAPIException(msg);
+			}
+		}
+
+		String msg = String.format("Failed to get redundancy configuration for platform %s due to null response", platformName);
+		throw new OneOpsClientAPIException(msg);
+	}
+
 	/**
 	 * Update redundancy configuration for a given platform
-	 * 
+	 *
 	 * @param environmentName
 	 * @param platformName
-	 * @param config update any 
+	 * @param config update any
 	 * @return
 	 * @throws OneOpsClientAPIException
 	 */
@@ -1455,19 +1489,19 @@ public class Transition extends APIClient {
 			String msg = "Missing environment name to be updated";
 			throw new OneOpsClientAPIException(msg);
 		}
-		
+
 		if(platformName == null || platformName.length() == 0) {
 			String msg = "Missing platform name to be updated";
 			throw new OneOpsClientAPIException(msg);
 		}
-		
+
 		if(config == null ) {
 			String msg = "Missing redundancy config to be updated";
 			throw new OneOpsClientAPIException(msg);
 		}
-		
+
 		RequestSpecification request = createRequest();
-		
+
 		JSONObject redundant = new JSONObject();
 		redundant.put("max", config.getMax());
 		redundant.put("pct_dpmt", config.getPercentDeploy());
@@ -1479,7 +1513,7 @@ public class Transition extends APIClient {
 		redundant.put("step_up", config.getStepUp());
 		JSONObject rconfig = new JSONObject();
 		rconfig.put("relationAttributes", redundant);
-		
+
 		redundant = new JSONObject();
 		redundant.put("max", "manifest");
 		redundant.put("pct_dpmt", "manifest");
@@ -1491,18 +1525,18 @@ public class Transition extends APIClient {
 		redundant.put("step_up", "manifest");
 		JSONObject owner = new JSONObject();
 		owner.put("owner", redundant);
-		
+
 		rconfig.put("relationAttrProps", owner);
 		if(componentName == null || componentName.isEmpty()) {
 			componentName = "compute";
-		} 
+		}
 		CiResource componentDetails = getPlatformComponent(environmentName, platformName, componentName);
 		JSONObject jo = new JSONObject();
 		jo.put(String.valueOf(componentDetails.getCiId()), rconfig);
-		
+
 		JSONObject dependsOn = new JSONObject();
 		dependsOn.put("depends_on", jo);
-		
+
 		Response response = request.body(dependsOn.toString()).put(transitionEnvUri + environmentName + IConstants.PLATFORM_URI + platformName);
 		if(response != null) {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
@@ -1511,11 +1545,11 @@ public class Transition extends APIClient {
 				String msg = String.format("Failed to update platforms %s redundancy for environment %s due to %s", platformName, environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
-		} 
+		}
 		String msg = String.format("Failed to update platforms %s redundancy for environment %s due to null response", platformName, environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
+
 	public CiResource updatePlatformCloudScale(String environmentName, String platformName, String cloudId, Map<String, String> cloudMap) throws OneOpsClientAPIException {
 		if (environmentName == null || environmentName.length() == 0) {
 			String msg = String.format("Missing environment name to be updated");
@@ -1554,12 +1588,12 @@ public class Transition extends APIClient {
 		String msg = String.format("Failed to update platforms %s cloud scale with cloud id for %s environment %s due to null response", platformName, cloudId, environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
-	
-	
+
+
+
 	/**
 	 * List relays
-	 * 
+	 *
 	 * @param environmentName
 	 * @return
 	 * @throws OneOpsClientAPIException
@@ -1569,7 +1603,7 @@ public class Transition extends APIClient {
 			String msg = "Missing environment name to get relays";
 			throw new OneOpsClientAPIException(msg);
 		}
-		
+
 		RequestSpecification request = createRequest();
 		Response response = request.get(transitionEnvUri + environmentName + "/relays/");
 		if(response != null) {
@@ -1579,31 +1613,31 @@ public class Transition extends APIClient {
 				String msg = String.format("Failed to list relay for environment %s due to %s", environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
-		} 
+		}
 		String msg = String.format("Failed to list relay for environment %s due to null response", environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
+
 	/**
 	 * Get relay details
-	 * 
+	 *
 	 * @param environmentName
 	 * @param relayName
 	 * @return
 	 * @throws OneOpsClientAPIException
 	 */
-	 
+
 	public CiResource getRelay(String environmentName, String relayName) throws OneOpsClientAPIException {
 		if(environmentName == null || environmentName.length() == 0) {
 			String msg = "Missing environment name to get relay details";
 			throw new OneOpsClientAPIException(msg);
 		}
-		
+
 		if(relayName == null || relayName.length() == 0) {
 			String msg = "Missing relay name to fetch details";
 			throw new OneOpsClientAPIException(msg);
 		}
-		
+
 		RequestSpecification request = createRequest();
 		Response response = request.get(transitionEnvUri + environmentName + "/relays/" + relayName);
 		if(response != null) {
@@ -1613,14 +1647,14 @@ public class Transition extends APIClient {
 				String msg = String.format("Failed to get relay %s for environment %s due to %s", relayName, environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
-		} 
+		}
 		String msg = String.format("Failed to get relay %s for environment %s due to null response", relayName, environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
+
 	/**
 	 * Add new Relay
-	 * 
+	 *
 	 * @param relayName
 	 * @param severity
 	 * @param emails
@@ -1636,35 +1670,35 @@ public class Transition extends APIClient {
 			String msg = "Missing environment name to create relay";
 			throw new OneOpsClientAPIException(msg);
 		}
-		
+
 		ResourceObject ro = new ResourceObject();
 		Map<String ,String> properties= Maps.newHashMap();
-		
+
 		if(relayName == null || relayName.length() == 0) {
 			String msg = "Missing relay name to create one";
 			throw new OneOpsClientAPIException(msg);
-		} 
+		}
 		if(emails == null || emails.length() == 0) {
 			String msg = "Missing emails addresses to create relay";
 			throw new OneOpsClientAPIException(msg);
-		} 
+		}
 		if(severity == null || severity.length() == 0) {
 			String msg = "Missing severity to create relay";
 			throw new OneOpsClientAPIException(msg);
-		} 
+		}
 		if(source == null || source.length() == 0) {
 			String msg = "Missing source to create relay";
 			throw new OneOpsClientAPIException(msg);
-		} 
-		
+		}
+
 
 		properties.put("ciName", relayName);
 		String path = "/" + instance.getOrgname() + "/" + assemblyName + "/" + environmentName;
 		properties.put("nsPath", path );
-		
+
 		RequestSpecification request = createRequest();
 		ro.setProperties(properties);
-		
+
 		Response newRelayResponse = request.get(transitionEnvUri + environmentName + "/relays/new");
 		if(newRelayResponse != null) {
 			JsonPath attachmentDetails = newRelayResponse.getBody().jsonPath();
@@ -1682,14 +1716,14 @@ public class Transition extends APIClient {
 				attributes.put("ns_paths", nsPaths);
 			if(!Strings.isNullOrEmpty(regex))
 				attributes.put("text_regex", regex);
-			
+
 			attributes.put("correlation", String.valueOf(correlation));
 			ro.setAttributes(attributes);
 		}
-		
+
 		JSONObject jsonObject = JsonUtil.createJsonObject(ro , "cms_ci");
 		Response response = request.body(jsonObject.toString()).post(transitionEnvUri + environmentName + "/relays");
-		
+
 		if(response != null) {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				return response.getBody().as(CiResource.class);
@@ -1697,14 +1731,14 @@ public class Transition extends APIClient {
 				String msg = String.format("Failed to create relay %s for environment %s due to %s", relayName, environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
-		} 
+		}
 		String msg = String.format("Failed to create relay with name %s for environment %s due to null response", relayName, environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
+
 	/**
 	 * Update relay
-	 * 
+	 *
 	 * @param environmentName
 	 * @param relayName
 	 * @param severity
@@ -1722,17 +1756,17 @@ public class Transition extends APIClient {
 			String msg = "Missing environment name to create relay";
 			throw new OneOpsClientAPIException(msg);
 		}
-		
+
 		ResourceObject ro = new ResourceObject();
 		Map<String ,String> attributes = Maps.newHashMap();
-		
+
 		if(relayName == null || relayName.length() == 0) {
 			String msg = "Missing relay name to update";
 			throw new OneOpsClientAPIException(msg);
-		} 
-		
+		}
+
 		RequestSpecification request = createRequest();
-		
+
 		Response relayResponse = request.get(transitionEnvUri + environmentName + "/relays/" + relayName);
 		if(relayResponse != null) {
 			JsonPath newVarJsonPath = relayResponse.getBody().jsonPath();
@@ -1756,11 +1790,11 @@ public class Transition extends APIClient {
 			}
 		}
 		ro.setAttributes(attributes);
-		
+
 		JSONObject jsonObject = JsonUtil.createJsonObject(ro , "cms_ci");
-		
+
 		Response response = request.body(jsonObject.toString()).put(transitionEnvUri + environmentName + "/relays/" + relayName);
-		
+
 		if(response != null) {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				return response.getBody().as(CiResource.class);
@@ -1768,7 +1802,7 @@ public class Transition extends APIClient {
 				String msg = String.format("Failed to update relay %s for environment %s due to %s", relayName, environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
-		} 
+		}
 		String msg = String.format("Failed to update relay %s for environment %s due to null response", relayName, environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
