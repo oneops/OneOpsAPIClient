@@ -1440,7 +1440,41 @@ public class Transition extends APIClient {
 		String msg = String.format("Failed to disable platforms for environment with name %s due to null response", environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
+
+    /**
+     * Get redundancy configuration for a given platform
+     *
+     * @param environmentName
+     * @param platformName
+     * @return
+     * @throws OneOpsClientAPIException
+     */
+	public CiResource getPlatformRedundancyConfig(String environmentName, String platformName) throws OneOpsClientAPIException {
+		if(environmentName == null || environmentName.length() == 0) {
+			String msg = "Missing environment name to get redundancy configuration";
+			throw new OneOpsClientAPIException(msg);
+		}
+
+		if(platformName == null || platformName.length() == 0) {
+			String msg = "Missing platform name to get redundancy configuration";
+			throw new OneOpsClientAPIException(msg);
+		}
+
+		RequestSpecification request = createRequest();
+		Response response = request.get(transitionEnvUri + environmentName + IConstants.PLATFORM_URI + platformName + "/edit");
+		if(response != null) {
+			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+				return response.getBody().as(CiResource.class);
+			} else {
+				String msg = String.format("Failed to get redundancy configuration for platform %s due to %s", platformName, response.getStatusLine());
+				throw new OneOpsClientAPIException(msg);
+			}
+		}
+
+		String msg = String.format("Failed to get redundancy configuration for platform %s due to null response", platformName);
+		throw new OneOpsClientAPIException(msg);
+	}
+
 	/**
 	 * Update redundancy configuration for a given platform
 	 * 
