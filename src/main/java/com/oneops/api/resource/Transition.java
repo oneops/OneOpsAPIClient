@@ -1,11 +1,13 @@
 package com.oneops.api.resource;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -515,6 +517,66 @@ public class Transition extends APIClient {
 			}
 		} 
 		String msg = String.format("Failed to get latest releases for environment %s due to null response", environmentName);
+		throw new OneOpsClientAPIException(msg);
+	}
+
+	public Release restoreRelease(String environmentName, Long releaseId) throws OneOpsClientAPIException, Exception {
+		if(environmentName == null || environmentName.length() == 0) {
+			String msg = "Missing environment name to fetch details";
+			throw new OneOpsClientAPIException(msg);
+		}
+
+		if(releaseId <= 0) {
+			String msg = "Missing releaseId to fetch the details";
+			throw new OneOpsClientAPIException(msg);
+		}
+
+		RequestSpecification request = createRequest();
+		Response response = request.post(transitionEnvUri + environmentName + IConstants.RELEASES_URI + releaseId +"/restore" );
+		if(response != null) {
+			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+				Map<String, Object> map = (Map<String, Object>)response.getBody().as(Map.class);
+				Object o = map.get("release");
+
+				ObjectMapper objectMapper = new ObjectMapper();
+				String json = objectMapper.writeValueAsString(o);
+				Release release = JsonUtil.toObject(json, new TypeReference<Release>() {
+				});
+				return release;
+				//return true;
+			} else {
+				String msg = String.format("Failed to restore release for environment %s due to %s", environmentName, response.getStatusLine());
+				throw new OneOpsClientAPIException(msg);
+			}
+		}
+		String msg = String.format("Failed to restore releases for environment %s due to null response", environmentName);
+		throw new OneOpsClientAPIException(msg);
+	}
+
+	public List<Release> listReleases(String environmentName) throws Exception {
+		if(environmentName == null || environmentName.length() == 0) {
+			String msg = "Missing environment name to fetch details";
+			throw new OneOpsClientAPIException(msg);
+		}
+
+		RequestSpecification request = createRequest();
+		Response response = request.get(transitionEnvUri + environmentName + "/timeline" );
+		if(response != null) {
+			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+				List<Release> timeline = JsonUtil.toObject(response.getBody().asString(), new TypeReference<List<Release>>(){});
+				List<Release> releases = new ArrayList<>();
+				for(Release r : timeline) {
+					if(r.getReleaseName() != null) {
+						releases.add(r);
+					}
+				}
+				return releases;
+			} else {
+				String msg = String.format("Failed to restore release for environment %s due to %s", environmentName, response.getStatusLine());
+				throw new OneOpsClientAPIException(msg);
+			}
+		}
+		String msg = String.format("Failed to restore releases for environment %s due to null response", environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
 	
