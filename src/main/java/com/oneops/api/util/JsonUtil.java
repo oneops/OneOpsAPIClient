@@ -19,6 +19,18 @@ public class JsonUtil {
 		}
 		return object;
 	}
+
+	public static String toJson(Object o) {
+		String json = "";
+		try{
+			ObjectMapper objectMapper = new ObjectMapper();
+			return objectMapper.writeValueAsString(o);
+
+		} catch(Exception e) {
+
+		}
+		return json;
+	}
 	
 	public static JSONObject createJsonObject(ResourceObject ro, String root) {
 		JSONObject rootObject = new JSONObject();

@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -520,13 +519,13 @@ public class Transition extends APIClient {
 		throw new OneOpsClientAPIException(msg);
 	}
 
-	public Release restoreRelease(String environmentName, Long releaseId) throws OneOpsClientAPIException, Exception {
+	public Release restoreRelease(String environmentName, Long releaseId) throws Exception {
 		if(environmentName == null || environmentName.length() == 0) {
 			String msg = "Missing environment name to fetch details";
 			throw new OneOpsClientAPIException(msg);
 		}
 
-		if(releaseId <= 0) {
+		if(releaseId == null) {
 			String msg = "Missing releaseId to fetch the details";
 			throw new OneOpsClientAPIException(msg);
 		}
@@ -538,12 +537,11 @@ public class Transition extends APIClient {
 				Map<String, Object> map = (Map<String, Object>)response.getBody().as(Map.class);
 				Object o = map.get("release");
 
-				ObjectMapper objectMapper = new ObjectMapper();
-				String json = objectMapper.writeValueAsString(o);
+				String json = JsonUtil.toJson(o);
 				Release release = JsonUtil.toObject(json, new TypeReference<Release>() {
 				});
+
 				return release;
-				//return true;
 			} else {
 				String msg = String.format("Failed to restore release for environment %s due to %s", environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
