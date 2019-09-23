@@ -518,8 +518,45 @@ public class Transition extends APIClient {
 		String msg = String.format("Failed to get latest releases for environment %s due to null response", environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
+	
+	
+	/**
+	 * Fetches bom release for the given assembly/environment
+	 * 
+	 * @param environmentName
+	 * @return
+	 * @throws OneOpsClientAPIException
+	 */
+	public Release getBomRelease(String environmentName) throws OneOpsClientAPIException {
+		if(environmentName == null || environmentName.length() == 0) {
+			String msg = "Missing environment name to fetch details";
+			throw new OneOpsClientAPIException(msg);
+		}
+		
+		RequestSpecification request = createRequest();
+		Response response = request.get(transitionEnvUri + environmentName + IConstants.RELEASES_URI + "bom" );
+		if(response != null) {
+			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+				return response.getBody().as(Release.class);
+			} else {
+				String msg = String.format("No bom-releases/updates found for environment %s ", environmentName);
+				LOG.warn(msg);
+				return null;
+			}
+		} 
+		String msg = String.format("Failed to get bom releases for environment %s due to null response", environmentName);
+		throw new OneOpsClientAPIException(msg);
+	}
 
-	public Release restoreRelease(String environmentName, Long releaseId) throws Exception {
+	/**
+	 * Restore a specific release
+	 *
+	 * @param environmentName
+	 * @apram releaseId
+	 * @return
+	 * @throws OneOpsClientAPIException
+	 */
+	public Release restoreRelease(String environmentName, Long releaseId) throws OneOpsClientAPIException {
 		if(environmentName == null || environmentName.length() == 0) {
 			String msg = "Missing environment name to fetch details";
 			throw new OneOpsClientAPIException(msg);
@@ -551,7 +588,14 @@ public class Transition extends APIClient {
 		throw new OneOpsClientAPIException(msg);
 	}
 
-	public List<Release> listReleases(String environmentName) throws Exception {
+	/**
+	 * Fetch all release for given environment
+	 *
+	 * @param environmentName
+	 * @return
+	 * @throws OneOpsClientAPIException
+	 */
+	public List<Release> listReleases(String environmentName) throws OneOpsClientAPIException {
 		if(environmentName == null || environmentName.length() == 0) {
 			String msg = "Missing environment name to fetch details";
 			throw new OneOpsClientAPIException(msg);
@@ -575,35 +619,6 @@ public class Transition extends APIClient {
 			}
 		}
 		String msg = String.format("Failed to restore releases for environment %s due to null response", environmentName);
-		throw new OneOpsClientAPIException(msg);
-	}
-	
-	
-	/**
-	 * Fetches bom release for the given assembly/environment
-	 * 
-	 * @param environmentName
-	 * @return
-	 * @throws OneOpsClientAPIException
-	 */
-	public Release getBomRelease(String environmentName) throws OneOpsClientAPIException {
-		if(environmentName == null || environmentName.length() == 0) {
-			String msg = "Missing environment name to fetch details";
-			throw new OneOpsClientAPIException(msg);
-		}
-		
-		RequestSpecification request = createRequest();
-		Response response = request.get(transitionEnvUri + environmentName + IConstants.RELEASES_URI + "bom" );
-		if(response != null) {
-			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
-				return response.getBody().as(Release.class);
-			} else {
-				String msg = String.format("No bom-releases/updates found for environment %s ", environmentName);
-				LOG.warn(msg);
-				return null;
-			}
-		} 
-		String msg = String.format("Failed to get bom releases for environment %s due to null response", environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
 	
