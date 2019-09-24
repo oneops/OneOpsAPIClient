@@ -567,6 +567,12 @@ public class Transition extends APIClient {
 			throw new OneOpsClientAPIException(msg);
 		}
 
+		Release latestRelease = getLatestRelease(environmentName);
+		String releaseState = latestRelease.getReleaseState();
+		if(releaseState.toLowerCase().equals("open")) {
+			discardOpenRelease(environmentName);
+		}
+
 		RequestSpecification request = createRequest();
 		Response response = request.post(transitionEnvUri + environmentName + IConstants.RELEASES_URI + releaseId +"/restore" );
 		if(response != null) {
