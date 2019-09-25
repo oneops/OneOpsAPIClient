@@ -581,11 +581,8 @@ public class Transition extends APIClient {
 				Map<String, Object> map = (Map<String, Object>)response.getBody().as(Map.class);
 				Object o = map.get("release");
 
-				String json = JsonUtil.toJson(o);
-				Release release = JsonUtil.toObject(json, new TypeReference<Release>() {
-				});
+				return JsonUtil.convert(o, new TypeReference<Release>(){});
 
-				return release;
 			} else {
 				String msg = String.format("Failed to restore release for environment %s due to %s", environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
@@ -612,14 +609,17 @@ public class Transition extends APIClient {
 		Response response = request.get(transitionEnvUri + environmentName + "/timeline" );
 		if(response != null) {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
-				List<Release> timeline = JsonUtil.toObject(response.getBody().asString(), new TypeReference<List<Release>>(){});
 				List<Release> releases = new ArrayList<>();
-				for(Release r : timeline) {
-					if(r.getReleaseName() != null) {
-						releases.add(r);
+				List<Object> timeline = (List<Object>)response.getBody().as(List.class);
+				for(Object o : timeline) {
+					if(o instanceof Map && ((Map) o).get("releaseName") != null) {
+						Release release = JsonUtil.convert(o, new TypeReference<Release>(){});
+						releases.add(release);
 					}
 				}
+
 				return releases;
+
 			} else {
 				String msg = String.format("Failed to restore release for environment %s due to %s", environmentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);

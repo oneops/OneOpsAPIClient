@@ -20,16 +20,15 @@ public class JsonUtil {
 		return object;
 	}
 
-	public static String toJson(Object o) {
-		String json = "";
+	public static <T> T convert(Object o, TypeReference<T> t) {
+		ObjectMapper mapper = new ObjectMapper();
+		T object = null;
 		try{
-			ObjectMapper objectMapper = new ObjectMapper();
-			return objectMapper.writeValueAsString(o);
-
-		} catch(Exception e) {
-
+			object = mapper.convertValue(o, t);
+		} catch (Exception e) {
 		}
-		return json;
+
+		return object;
 	}
 	
 	public static JSONObject createJsonObject(ResourceObject ro, String root) {
