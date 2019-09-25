@@ -569,8 +569,9 @@ public class Transition extends APIClient {
 
 		Release latestRelease = getLatestRelease(environmentName);
 		String releaseState = latestRelease.getReleaseState();
-		if(releaseState.toLowerCase().equals("open")) {
-			discardOpenRelease(environmentName);
+		if("open".equals(releaseState.toLowerCase())) {
+			String msg = String.format("Failed to restore release, release -> %s is in open state", latestRelease.getReleaseId());
+			throw new OneOpsClientAPIException(msg);
 		}
 
 		RequestSpecification request = createRequest();
