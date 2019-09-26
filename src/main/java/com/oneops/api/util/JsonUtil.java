@@ -19,6 +19,17 @@ public class JsonUtil {
 		}
 		return object;
 	}
+
+	public static <T> T convert(Object o, TypeReference<T> t) {
+		ObjectMapper mapper = new ObjectMapper();
+		T object = null;
+		try{
+			object = mapper.convertValue(o, t);
+		} catch (Exception e) {
+		}
+
+		return object;
+	}
 	
 	public static JSONObject createJsonObject(ResourceObject ro, String root) {
 		JSONObject rootObject = new JSONObject();
