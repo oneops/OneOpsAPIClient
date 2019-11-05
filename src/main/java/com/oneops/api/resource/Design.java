@@ -640,11 +640,7 @@ public class Design extends APIClient {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				return response.getBody().as(CiResource.class);
 			} else {
-				String msg = String.format("Failed to delete component '%s' of platform '%s' due to %s: %s",
-																	 componentName,
-																	 platformName,
-																	 response.getStatusLine(),
-																	 response.getBody().asString());
+				String msg = String.format("Failed to delete component '%s' of platform '%s' due to %s: %s", componentName, platformName, response.getStatusLine(), response.getBody().asString());
 				throw new OneOpsClientAPIException(msg);
 			}
 		}
