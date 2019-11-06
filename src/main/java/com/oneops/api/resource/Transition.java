@@ -880,11 +880,11 @@ public class Transition extends APIClient {
 	 */
 	public List<CiResource> listPlatformComponents(String environmentName, String platformName) throws OneOpsClientAPIException {
 		if(environmentName == null || environmentName.length() == 0) {
-			String msg = "Missing environment name to list enviornment platform components";
+			String msg = "Missing environment name to list environment platform components";
 			throw new OneOpsClientAPIException(msg);
 		}
 		if(platformName == null || platformName.length() == 0) {
-			String msg = "Missing platform name to list enviornment platform components";
+			String msg = "Missing platform name to list environment platform components";
 			throw new OneOpsClientAPIException(msg);
 		}
 		RequestSpecification request = createRequest();
@@ -912,15 +912,15 @@ public class Transition extends APIClient {
 	 */
 	public CiResource getPlatformComponent(String environmentName, String platformName, String componentName) throws OneOpsClientAPIException {
 		if(environmentName == null || environmentName.length() == 0) {
-			String msg = "Missing environment name to get enviornment platform component details";
+			String msg = "Missing environment name to get environment platform component details";
 			throw new OneOpsClientAPIException(msg);
 		}
 		if(platformName == null || platformName.length() == 0) {
-			String msg = "Missing platform name to get enviornment platform component details";
+			String msg = "Missing platform name to get environment platform component details";
 			throw new OneOpsClientAPIException(msg);
 		}
 		if(componentName == null || componentName.length() == 0) {
-			String msg = "Missing component name to get enviornment platform component details";
+			String msg = "Missing component name to get environment platform component details";
 			throw new OneOpsClientAPIException(msg);
 		}
 		RequestSpecification request = createRequest();
@@ -929,11 +929,11 @@ public class Transition extends APIClient {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				return response.getBody().as(CiResource.class);
 			} else {
-				String msg = String.format("Failed to get enviornment %s platform %s component %s details due to %s", environmentName, platformName, componentName, response.getStatusLine());
+				String msg = String.format("Failed to get environment %s platform %s component %s details due to %s", environmentName, platformName, componentName, response.getStatusLine());
 				throw new OneOpsClientAPIException(msg);
 			}
 		} 
-		String msg = String.format("Failed to get enviornment %s platform %s component %s details due to null response", environmentName, platformName, componentName);
+		String msg = String.format("Failed to get environment %s platform %s component %s details due to null response", environmentName, platformName, componentName);
 		throw new OneOpsClientAPIException(msg);
 	}
 	
@@ -1276,11 +1276,11 @@ public class Transition extends APIClient {
 	 */
 	public List<CiResource> listPlatformVariables(String environmentName, String platformName) throws OneOpsClientAPIException {
 		if(environmentName == null || environmentName.length() == 0) {
-			String msg = "Missing environment name to list enviornment platform variables";
+			String msg = "Missing environment name to list environment platform variables";
 			throw new OneOpsClientAPIException(msg);
 		}
 		if(platformName == null || platformName.length() == 0) {
-			String msg = "Missing platform name to list enviornment platform variables";
+			String msg = "Missing platform name to list environment platform variables";
 			throw new OneOpsClientAPIException(msg);
 		}
 		RequestSpecification request = createRequest();
@@ -1394,7 +1394,7 @@ public class Transition extends APIClient {
 	 */
 	public List<CiResource> listGlobalVariables(String environmentName) throws OneOpsClientAPIException {
 		if(environmentName == null || environmentName.length() == 0) {
-			String msg = "Missing environment name to list enviornment variables";
+			String msg = "Missing environment name to list environment variables";
 			throw new OneOpsClientAPIException(msg);
 		}
 		RequestSpecification request = createRequest();
