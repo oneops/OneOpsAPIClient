@@ -6,7 +6,7 @@
     <version>3</version>
   </parent>
   <artifactId>oneops-client</artifactId>
-  <version>5.0.23</version>
+  <version>5.0.24-SNAPSHOT</version>
   <dependencies>
     <dependency>
       <groupId>com.jayway.restassured</groupId>
@@ -54,7 +54,7 @@
   <scm>
     <developerConnection>scm:git:git@github.com:oneops/oneops-api.git</developerConnection>
     <url>https://github.com/oneops/oneops-client</url>
-    <tag>release-5.0.23</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <build>
