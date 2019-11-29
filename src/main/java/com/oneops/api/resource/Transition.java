@@ -217,7 +217,7 @@ public class Transition extends APIClient {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				
 				response = request.get(transitionEnvUri + environmentName);
-				String envState = response.getBody().jsonPath().get("ciState");
+				String envState = response.getBody().jsonPath().getString("ciState");
 				//wait for deployment plan to generate
 				do {
 					Uninterruptibles.sleepUninterruptibly(5, TimeUnit.SECONDS);
@@ -226,7 +226,7 @@ public class Transition extends APIClient {
 						String msg = String.format("Failed to commit environment due to null response");
 						throw new OneOpsClientAPIException(msg);
 					}
-					envState = response.getBody().jsonPath().get("ciState");
+					envState = response.getBody().jsonPath().getString("ciState");
 				} while(response != null && "locked".equalsIgnoreCase(envState));
 				
 				String comments = response.getBody().jsonPath().getString("comments");
