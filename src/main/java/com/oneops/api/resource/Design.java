@@ -178,9 +178,9 @@ public class Design extends APIClient {
 		if(response != null) {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				
-				String releaseState = response.getBody().jsonPath().get("releaseState");
+				String releaseState = response.getBody().jsonPath().getString("releaseState");
 				if("open".equals(releaseState)) {
-					long releaseId = response.getBody().jsonPath().get("releaseId");
+					long releaseId = response.getBody().jsonPath().getLong("releaseId");
 					response = request.post(designReleaseURI + releaseId + "/commit");
 					if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 						return response.getBody().as(Release.class);
