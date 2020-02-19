@@ -1,5 +1,6 @@
 package com.oneops.api.resource;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -7,6 +8,7 @@ import java.util.Map;
 import org.json.JSONObject;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.jayway.restassured.path.json.JsonPath;
@@ -382,59 +384,62 @@ public class Operation extends APIClient {
 			throw new OneOpsClientAPIException(msg);
 		}
 		
-		RequestSpecification request = createRequest();
-		ResourceObject ro = new ResourceObject();
-		Map<String ,String> properties= new HashMap<String ,String>();
-		
-		Transition transition = new Transition(instance, this.assemblyName);
-		CiResource component = transition.getPlatformComponent(this.environmentName, platformName, componentName);
-		Long componentId = component.getCiId();
-		properties.put("procedureState", "active");
-		properties.put("arglist", arglist);
-		
-		properties.put("ciId", "" +  componentId);
-		properties.put("force", "true");
-		properties.put("procedureCiId", "0");
-		
-		Map<String ,Object> flow = Maps.newHashMap();
-		flow.put("targetIds", instanceList);
-		flow.put("relationName", "base.RealizedAs");
-		flow.put("direction", "from");
-		
-		Map<String ,Object> action = Maps.newHashMap();
-		action.put("isInheritable", null);
-		action.put("actionName", "base.RealizedAs");
-		action.put("inherited", null);
-		action.put("isCritical", "true");
-		action.put("stepNumber", "1");
-		action.put("extraInfo", null);
-		action.put("actionName", actionName);
-		
-		List<Map<String ,Object>> actions = Lists.newArrayList();
-		actions.add(action);
-		flow.put("actions", actions);
-		
-		Map<String ,Object> definition = new HashMap<String ,Object>();
-		List<Map<String ,Object>> flows = Lists.newArrayList();
-		flows.add(flow);
-		definition.put("flow", flows);
-		definition.put("name", actionName);
-		
-		properties.put("definition", definition.toString());
-		ro.setProperties(properties);
-		
-		JSONObject jsonObject = JsonUtil.createJsonObject(ro , "cms_procedure");
-		Response response = request.body(jsonObject.toString()).post(IConstants.OPERATION_URI +  IConstants.PROCEDURES_URI);
-		if(response != null) {
-			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
-				return response.getBody().as(Procedure.class);
-			} else {
-				String msg = String.format("Failed to execute procedures due to %s", response.getStatusLine());
-				throw new OneOpsClientAPIException(msg);
-			}
-		} 
-		String msg = "Failed to execute procedures due to null response";
-		throw new OneOpsClientAPIException(msg);
+		try{
+			RequestSpecification request = createRequest();
+			ResourceObject ro = new ResourceObject();
+			Map<String ,String> properties= new HashMap<String ,String>();
+			
+			Transition transition = new Transition(instance, this.assemblyName);
+			CiResource component = transition.getPlatformComponent(this.environmentName, platformName, componentName);
+			Long componentId = component.getCiId();
+			properties.put("procedureState", "active");
+			properties.put("arglist", arglist);
+			properties.put("ciId", "" +  componentId);
+			properties.put("force", "true");
+			properties.put("procedureCiId", "0");
+			
+			Map<String ,Object> flow = Maps.newHashMap();
+			flow.put("targetIds", instanceList);
+			flow.put("relationName", "base.RealizedAs");
+			flow.put("direction", "from");
+			
+			Map<String ,Object> action = Maps.newHashMap();
+			action.put("isInheritable", null);
+			action.put("inherited", null);
+			action.put("isCritical", "true");
+			action.put("stepNumber", "1");
+			action.put("extraInfo", null);
+			action.put("actionName", actionName);
+			
+			List<Map<String ,Object>> actions = Lists.newArrayList();
+			actions.add(action);
+			flow.put("actions", actions);
+			
+			Map<String ,Object> definition = new HashMap<String ,Object>();
+			List<Map<String ,Object>> flows = Lists.newArrayList();
+			flows.add(flow);
+			definition.put("flow", flows);
+			definition.put("name", actionName);
+			
+			properties.put("definition", new ObjectMapper().writeValueAsString(definition));
+			ro.setProperties(properties);
+			
+			JSONObject jsonObject = JsonUtil.createJsonObject(ro, "cms_procedure");
+			jsonObject.put("roll_at", rollingPercent);
+			Response response = request.body(jsonObject.toString()).post(IConstants.OPERATION_URI +  IConstants.PROCEDURES_URI);
+			if(response != null) {
+				if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+					return response.getBody().as(Procedure.class);
+				} else {
+					String msg = String.format("Failed to execute procedures due to %s", response.getStatusLine());
+					throw new OneOpsClientAPIException(msg);
+				}
+			} 
+			String msg = "Failed to execute procedures due to null response";
+			throw new OneOpsClientAPIException(msg);
+		}catch( IOException e ){
+			throw new OneOpsClientAPIException("failed to write json", e);
+		}
 	}
 	
 	public CiResource updatePlatformAutoHealingStatus(String environmentName, String platformName, String healingOption, boolean isEnabled) throws OneOpsClientAPIException {
