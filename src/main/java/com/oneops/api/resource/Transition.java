@@ -1893,7 +1893,7 @@ public class Transition extends APIClient {
 	private String getErrorMessageFromResponse(Response response) {
 		String errorMessage = "Error Status Code: " + response.getStatusCode() + ". Error: ";
 		if (response.getBody() != null) {
-			errorMessage = errorMessage + response.getBody().prettyPrint();
+			errorMessage = errorMessage + response.getBody().asString();
 		} else {
 			errorMessage = errorMessage + "n/a";
 		}
