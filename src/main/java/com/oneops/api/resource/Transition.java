@@ -238,7 +238,7 @@ public class Transition extends APIClient {
 				return response.getBody().as(Release.class);
 				
 			} else {
-				String msg = String.format("Failed to commit environment %s due to %s", environmentName, response.getStatusLine());
+				String msg = String.format("Failed to commit environment %s. %s.", environmentName, getErrorMessageFromResponse(response));
 				throw new OneOpsClientAPIException(msg);
 			}
 		} 
@@ -278,7 +278,7 @@ public class Transition extends APIClient {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				return response.getBody().as(Deployment.class);
 			} else {
-				String msg = String.format("Failed to start deployment for environment %s due to null response" , environmentName);
+				String msg = String.format("Failed to start deployment for environment %s. %s" , environmentName, getErrorMessageFromResponse(response));
 				throw new OneOpsClientAPIException(msg);
 			}
 		} else {
@@ -314,7 +314,8 @@ public class Transition extends APIClient {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				return response.getBody().as(Deployment.class);
 			} else {
-				String msg = String.format("Failed to get deployment status for environment %s with deployment Id %s due to %s", environmentName, deploymentId, response.getStatusLine());
+				String msg = String.format("Failed to get deployment status for environment %s with deployment Id %s. %s",
+						environmentName, deploymentId, getErrorMessageFromResponse(response));
 				throw new OneOpsClientAPIException(msg);
 			}
 		} 
@@ -341,7 +342,7 @@ public class Transition extends APIClient {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				return response.getBody().as(Deployment.class);
 			} else {
-				String msg = String.format("Failed to get latest deployment for environment %s due to %s", environmentName, response.getStatusLine());
+				String msg = String.format("Failed to get latest deployment for environment %s. %s", environmentName, getErrorMessageFromResponse(response));
 				throw new OneOpsClientAPIException(msg);
 			}
 		} 
@@ -373,7 +374,7 @@ public class Transition extends APIClient {
 				if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 					return response.getBody().as(Release.class);
 				} else {
-					String msg = String.format("Failed to discard deployment plan for environment %s due to %s", environmentName, response.getStatusLine());
+					String msg = String.format("Failed to discard deployment plan for environment %s. Status code: %s. Error: %s", environmentName, response.getStatusCode(), response.getBody().prettyPrint());
 					throw new OneOpsClientAPIException(msg);
 				}
 			} 
@@ -1887,5 +1888,15 @@ public class Transition extends APIClient {
 		} 
 		String msg = String.format("Failed to update relay %s for environment %s due to null response", relayName, environmentName);
 		throw new OneOpsClientAPIException(msg);
+	}
+
+	private String getErrorMessageFromResponse(Response response) {
+		String errorMessage = "Error Status Code: " + response.getStatusCode() + ". Error: ";
+		if (response.getBody() != null) {
+			errorMessage = errorMessage + response.getBody().prettyPrint();
+		} else {
+			errorMessage = errorMessage + "n/a";
+		}
+		return errorMessage;
 	}
 }
