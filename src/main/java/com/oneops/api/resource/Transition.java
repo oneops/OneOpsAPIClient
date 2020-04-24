@@ -374,7 +374,7 @@ public class Transition extends APIClient {
 				if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 					return response.getBody().as(Release.class);
 				} else {
-					String msg = String.format("Failed to discard deployment plan for environment %s. Status code: %s. Error: %s", environmentName, response.getStatusCode(), response.getBody().prettyPrint());
+					String msg = String.format("Failed to discard deployment plan for environment %s. %s", environmentName, getErrorMessageFromResponse(response));
 					throw new OneOpsClientAPIException(msg);
 				}
 			} 
