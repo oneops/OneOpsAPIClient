@@ -366,7 +366,7 @@ public class Operation extends APIClient {
 	 * @return
 	 * @throws OneOpsClientAPIException
 	 */
-	public Procedure executeAction(String platformName, String componentName, String actionName, List<Long> instanceList, String arglist, int rollingPercent) throws OneOpsClientAPIException {
+	public Procedure executeAction(String platformName, String componentName, String actionName, String userDefinedActionName, List<Long> instanceList, String arglist, int rollingPercent) throws OneOpsClientAPIException {
 		if(platformName == null || platformName.length() == 0) {
 			String msg = "Missing platform name to fetch details";
 			throw new OneOpsClientAPIException(msg);
@@ -397,6 +397,10 @@ public class Operation extends APIClient {
 			properties.put("ciId", "" +  componentId);
 			properties.put("force", "true");
 			properties.put("procedureCiId", "0");
+
+			if (userDefinedActionName != null) {
+				properties.put("procedureName", userDefinedActionName);
+			}
 			
 			Map<String ,Object> flow = Maps.newHashMap();
 			flow.put("targetIds", instanceList);
@@ -419,8 +423,13 @@ public class Operation extends APIClient {
 			List<Map<String ,Object>> flows = Lists.newArrayList();
 			flows.add(flow);
 			definition.put("flow", flows);
-			definition.put("name", actionName);
-			
+
+			if (userDefinedActionName != null) {
+				definition.put("name", userDefinedActionName);
+			} else {
+				definition.put("name", actionName);
+			}
+
 			properties.put("definition", new ObjectMapper().writeValueAsString(definition));
 			ro.setProperties(properties);
 			
