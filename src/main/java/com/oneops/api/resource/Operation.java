@@ -359,6 +359,10 @@ public class Operation extends APIClient {
 		String msg = String.format("Failed to cancel procedure with the given Id %s due to null response", procedureId);
 		throw new OneOpsClientAPIException(msg);
 	}
+
+	public Procedure executeAction(String platformName, String componentName, String actionName, List<Long> instanceList, String argList, int rollingPercent) throws OneOpsClientAPIException {
+		return executeAction(platformName, componentName, actionName, null, instanceList, argList, rollingPercent);
+	}
 	
 	/**
 	 * Execute procedure for a given platform

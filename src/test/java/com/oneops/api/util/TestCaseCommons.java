@@ -317,7 +317,7 @@ public class TestCaseCommons {
 		List<String> actions = actionList.getList("actionName");
 		for (String action : actions) {
 			System.out.println("executing action " + action + " on " + component);
-			Procedure procedureExec = operation.executeAction(platform, component, action, null, instances, null, 100);
+			Procedure procedureExec = operation.executeAction(platform, component, action, instances, null, 100);
 			String state = procedureExec.getProcedureState();
 			Long procedureId = procedureExec.getProcedureId();
 			do {
