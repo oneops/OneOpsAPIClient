@@ -540,9 +540,8 @@ public class Transition extends APIClient {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				return response.getBody().as(Release.class);
 			} else {
-				String msg = String.format("No bom-releases/updates found for environment %s ", environmentName);
-				LOG.warn(msg);
-				return null;
+				String msg = String.format("No bom-releases or updates found for environment %s. Please try to touch a component and commit the env before deploying.", environmentName);
+				throw new OneOpsClientAPIException(msg);
 			}
 		} 
 		String msg = String.format("Failed to get bom releases for environment %s due to null response", environmentName);
