@@ -22,4 +22,8 @@ public interface IConstants {
 	static String INSTANCES_URI = "/instances/";
 	static String MONITORS_URI = "/monitors/";
 	static String DEPLOYMENTS_URI = "/deployments/";
+
+	static String DEFAULT_COMMIT_QUERY_STRING = "commit=true&capacity=true";
+	static String DEFAULT_CAPACITY_QUERY_STRING = "capacity=true";
+	static String EXISTING_DEPLOYMENT_MESSAGE = "There is an active deployment";
 }

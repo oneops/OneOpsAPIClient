@@ -45,6 +45,7 @@ public class TestCaseCommons {
 		setupPlatform(instance, context);
 		setupEnv(instance, context);
 		deploy(instance, context.getAssemblyName(), context.getEnvName());
+		newDeploy(instance, context.getAssemblyName(), context.getEnvName());
 	}
 	
 	void executeTestCase(OOInstance instance, TestContext context, String fileContents) throws OneOpsClientAPIException {
@@ -52,6 +53,7 @@ public class TestCaseCommons {
 		setupPlatform(instance, context, fileContents);
 		setupEnv(instance, context);
 		deploy(instance, context.getAssemblyName(), context.getEnvName());
+		newDeploy(instance, context.getAssemblyName(), context.getEnvName());
 	}
 	
 	void setupAssembly(OOInstance instance, TestContext context) throws OneOpsClientAPIException {
@@ -166,6 +168,23 @@ public class TestCaseCommons {
 			waitForActiveDeployment(instance, assemblyName, envName, deploymentId, releaseId);
 		}
         
+	}
+
+	void newDeploy(OOInstance instance, String assemblyName, String envName) throws OneOpsClientAPIException {
+		Transition transition = new Transition(instance, assemblyName);
+		String deploymentComment = "new commit and deployment";
+		Release latestRelease = transition.getLatestRelease(envName);
+
+		if ("open".equalsIgnoreCase(latestRelease.getReleaseState())) {
+			transition.commitEnvironment(envName, null, null, false, deploymentComment);
+		}
+
+		Deployment deploy = transition.deploy(envName, null, null, false, instance.getComment());
+		Long deploymentId = deploy.getDeploymentId();
+		Long releaseId = deploy.getReleaseId();
+		transition.getDeploymentStatus(envName, deploymentId);
+		waitForActiveDeployment(instance, assemblyName, envName, deploymentId, releaseId);
+
 	}
 	
 	public void teardownEnv(OOInstance instance, String assemblyName, boolean force) throws OneOpsClientAPIException {

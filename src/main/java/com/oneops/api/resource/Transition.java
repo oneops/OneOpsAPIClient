@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
+import com.oneops.api.resource.model.*;
+import com.oneops.api.util.TransitionUtil;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,14 +25,6 @@ import com.oneops.api.APIClient;
 import com.oneops.api.OOInstance;
 import com.oneops.api.ResourceObject;
 import com.oneops.api.exception.OneOpsClientAPIException;
-import com.oneops.api.resource.model.AttrProps;
-import com.oneops.api.resource.model.CiAttributes;
-import com.oneops.api.resource.model.CiResource;
-import com.oneops.api.resource.model.Deployment;
-import com.oneops.api.resource.model.DeploymentRFC;
-import com.oneops.api.resource.model.Log;
-import com.oneops.api.resource.model.RedundancyConfig;
-import com.oneops.api.resource.model.Release;
 import com.oneops.api.util.IConstants;
 import com.oneops.api.util.JsonUtil;
 
@@ -238,14 +232,115 @@ public class Transition extends APIClient {
 				return response.getBody().as(Release.class);
 				
 			} else {
-				String msg = String.format("Failed to commit environment %s. %s.", environmentName, getErrorMessageFromResponse(response));
+				String msg = String.format("Failed to commit environment %s. %s.", environmentName, TransitionUtil.getErrorMessageFromResponse(response));
 				throw new OneOpsClientAPIException(msg);
 			}
 		} 
 		String msg = String.format("Failed to commit environment %s due to null response", environmentName);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
+
+	/**
+	 * Commits environment and generate in-memory deployment plan
+	 *
+	 * @param environmentName {mandatory}
+	 * @param excludePlatforms
+	 * @param includeClouds
+	 * @param ignoreCloudDeploymentOrder
+	 * @param comment
+	 * @return
+	 * @throws OneOpsClientAPIException
+	 */
+	public Release commitEnvironment(String environmentName, List<Long> excludePlatforms, List<Long> includeClouds,
+									 boolean ignoreCloudDeploymentOrder, String comment) throws OneOpsClientAPIException {
+
+		RequestSpecification request = createRequest();
+		StringBuilder queryString = new StringBuilder();
+		queryString.append(IConstants.DEFAULT_COMMIT_QUERY_STRING);
+
+		TransitionUtil.appendListToQueryString(excludePlatforms, queryString, "exclude_platforms");
+
+		TransitionUtil.appendListToQueryString(includeClouds, queryString, "include_clouds");
+
+		queryString.append("&").append("ignore_cloud_dpmt_order=").append(ignoreCloudDeploymentOrder);
+
+		if(comment != null) {
+			queryString.append("&").append("desc=").append(comment);
+		}
+
+		String url = transitionEnvUri + environmentName + "/deployments/bom?" + queryString.toString();
+		Response response = request.get(url);
+
+		if(response != null) {
+			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+				DeploymentBom body = response.getBody().as(DeploymentBom.class);
+
+				if (body.getErrors() != null) {
+					String msg = String.format("Failed to commit environment %s due to the following errors %s",
+							environmentName, String.join(" ", body.getErrors()));
+					throw new OneOpsClientAPIException(msg);
+				}
+
+				Capacity capacity = body.getCapacity();
+				if (!"ok".equals(capacity.getReservationCheck())) {
+					String msg = String.format("Environment %s committed successfully." +
+									"But reservation check failed: %s. Cannot proceed with deployment",
+							environmentName, capacity.getReservationCheck());
+					throw new OneOpsClientAPIException(msg);
+				}
+
+				return body.getRelease();
+
+			} else {
+				String msg = String.format("Failed to commit environment %s. %s.", environmentName, TransitionUtil.getErrorMessageFromResponse(response));
+				throw new OneOpsClientAPIException(msg);
+			}
+		}
+		String msg = String.format("Failed to commit environment %s due to null response", environmentName);
+		throw new OneOpsClientAPIException(msg);
+	}
+
+	/**
+	 * Generate a deployment plan and start the deployment.
+	 *
+	 * 1. The first Deployment API call generates a deployment plan, starts the deployment and returns
+	 * the deployment plan information.
+	 * 2. We need a second API call to check if the deployment started successfully or if it failed due
+	 * to capacity issues (if deploy is called without committing), or any other errors.
+	 * If the deployment has started successfully, sometimes we do get `Active deployment in progress` error
+	 * with the second API call, which can be ignored.
+	 *
+	 * @param environmentName
+	 * @return
+	 * @throws OneOpsClientAPIException
+	 */
+	public Deployment deploy(String environmentName, List<Long> excludePlatforms, List<Long> includeClouds,
+							 boolean ignoreCloudDeploymentOrder, String comments) throws OneOpsClientAPIException {
+
+		RequestSpecification request = createRequest();
+		Map<String, String> properties = new HashMap<>();
+
+		TransitionUtil.addStringToPropertyMap(excludePlatforms, properties, "exclude_platforms");
+		TransitionUtil.addStringToPropertyMap(includeClouds, properties, "include_clouds");
+
+		properties.put("ignore_cloud_dpmt_order", String.valueOf(ignoreCloudDeploymentOrder));
+
+		ResourceObject ro = new ResourceObject();
+		ro.setProperties(properties);
+
+		JSONObject jsonObject = JsonUtil.createJsonObject(ro, null);
+
+		if (comments != null) {
+			Map<String, String> cmsDeployment = new HashMap<>();
+			cmsDeployment.put("comments", comments);
+			jsonObject.put("cms_deployment", cmsDeployment);
+		}
+
+		TransitionUtil.deployAndCheckStatus(environmentName, transitionEnvUri, request, jsonObject);
+
+		return getLatestDeployment(environmentName);
+	}
+
 	/**
 	 * Deploy an already generated deployment plan
 	 * 
@@ -278,7 +373,7 @@ public class Transition extends APIClient {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				return response.getBody().as(Deployment.class);
 			} else {
-				String msg = String.format("Failed to start deployment for environment %s. %s" , environmentName, getErrorMessageFromResponse(response));
+				String msg = String.format("Failed to start deployment for environment %s. %s" , environmentName, TransitionUtil.getErrorMessageFromResponse(response));
 				throw new OneOpsClientAPIException(msg);
 			}
 		} else {
@@ -315,7 +410,7 @@ public class Transition extends APIClient {
 				return response.getBody().as(Deployment.class);
 			} else {
 				String msg = String.format("Failed to get deployment status for environment %s with deployment Id %s. %s",
-						environmentName, deploymentId, getErrorMessageFromResponse(response));
+						environmentName, deploymentId, TransitionUtil.getErrorMessageFromResponse(response));
 				throw new OneOpsClientAPIException(msg);
 			}
 		} 
@@ -342,7 +437,7 @@ public class Transition extends APIClient {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				return response.getBody().as(Deployment.class);
 			} else {
-				String msg = String.format("Failed to get latest deployment for environment %s. %s", environmentName, getErrorMessageFromResponse(response));
+				String msg = String.format("Failed to get latest deployment for environment %s. %s", environmentName, TransitionUtil.getErrorMessageFromResponse(response));
 				throw new OneOpsClientAPIException(msg);
 			}
 		} 
@@ -374,7 +469,7 @@ public class Transition extends APIClient {
 				if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 					return response.getBody().as(Release.class);
 				} else {
-					String msg = String.format("Failed to discard deployment plan for environment %s. %s", environmentName, getErrorMessageFromResponse(response));
+					String msg = String.format("Failed to discard deployment plan for environment %s. %s", environmentName, TransitionUtil.getErrorMessageFromResponse(response));
 					throw new OneOpsClientAPIException(msg);
 				}
 			} 
@@ -1887,15 +1982,5 @@ public class Transition extends APIClient {
 		} 
 		String msg = String.format("Failed to update relay %s for environment %s due to null response", relayName, environmentName);
 		throw new OneOpsClientAPIException(msg);
-	}
-
-	private String getErrorMessageFromResponse(Response response) {
-		String errorMessage = "Error Status Code: " + response.getStatusCode() + ". Error: ";
-		if (response.getBody() != null) {
-			errorMessage = errorMessage + response.getBody().asString();
-		} else {
-			errorMessage = errorMessage + "n/a";
-		}
-		return errorMessage;
 	}
 }
