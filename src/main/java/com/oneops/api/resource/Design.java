@@ -203,9 +203,8 @@ public class Design extends APIClient {
 	}
 	
 	/**
-	 * Fetches latest release for the given assembly/environment
+	 * Fetches latest release
 	 * 
-	 * @param environmentName
 	 * @return
 	 * @throws OneOpsClientAPIException
 	 */
@@ -223,6 +222,7 @@ public class Design extends APIClient {
 		String msg = String.format("Failed to get latest releases due to null response");
 		throw new OneOpsClientAPIException(msg);
 	}
+
 	/**
 	 * Commits specific platform with open release
 	 * 
@@ -326,8 +326,7 @@ public class Design extends APIClient {
 	
 	/**
 	 * List platform components for a given assembly/design/platform
-	 * 
-	 * @param environmentName
+	 *
 	 * @param platformName
 	 * @return
 	 * @throws OneOpsClientAPIException
@@ -547,7 +546,7 @@ public class Design extends APIClient {
 	 * Update component dependency to sibling componenets of same type
 	 * @param platformName
 	 * @param componentName
-	 * @param dependsOnComponentName
+	 * @param dependsOnComponentNames
 	 * @return
 	 * @throws OneOpsClientAPIException
 	 */
@@ -652,6 +651,7 @@ public class Design extends APIClient {
 	 * List attachments for a given assembly/design/platform/component
 	 * 
 	 * @param platformName
+	 * @param componentName
 	 * @return
 	 * @throws OneOpsClientAPIException
 	 */
@@ -679,6 +679,7 @@ public class Design extends APIClient {
 	 * 
 	 * @param platformName
 	 * @param componentName
+	 * @param attachmentName
 	 * @return
 	 * @throws OneOpsClientAPIException
 	 */
@@ -800,6 +801,7 @@ public class Design extends APIClient {
 	 * 
 	 * @param platformName
 	 * @param componentName
+	 * @param uniqueName
 	 * @param attributes
 	 * 
 	 * Sample request for new attachment attributes
@@ -934,6 +936,7 @@ public class Design extends APIClient {
 	 * Get local variable details
 	 * 
 	 * @param platformName
+	 * @param variableName
 	 * @return
 	 * @throws OneOpsClientAPIException
 	 */
@@ -962,9 +965,9 @@ public class Design extends APIClient {
 	
 	/**
 	 * Add platform variables for a given assembly/design
-	 * 
-	 * @param environmentName
-	 * @param variables
+	 *
+	 * @param variableName
+	 * @param variableValue
 	 * @return
 	 * @throws OneOpsClientAPIException
 	 */
@@ -1040,7 +1043,8 @@ public class Design extends APIClient {
 	 * Update platform local variables for a given assembly/design/platform
 	 * 
 	 * @param platformName
-	 * @param variables
+	 * @param variableName
+	 * @param variableValue
 	 * @return
 	 * @throws OneOpsClientAPIException
 	 */
@@ -1106,7 +1110,9 @@ public class Design extends APIClient {
 	 * Update platform local variables for a given assembly/design/platform
 	 * 
 	 * @param platformName
-	 * @param variables
+	 * @param variableName
+	 * @param variableValue
+	 * @param isSecure
 	 * @return
 	 * @throws OneOpsClientAPIException
 	 */
@@ -1172,7 +1178,6 @@ public class Design extends APIClient {
 	/**
 	 * Deletes the given global variable
 	 * 
-	 * @param platformName
 	 * @param variableName
 	 * @return
 	 * @throws OneOpsClientAPIException
@@ -1222,7 +1227,7 @@ public class Design extends APIClient {
 	/**
 	 * Get global variable details
 	 * 
-	 * @param platformName
+	 * @param variableName
 	 * @return
 	 * @throws OneOpsClientAPIException
 	 */
@@ -1247,9 +1252,10 @@ public class Design extends APIClient {
 	
 	/**
 	 * Add global variables for a given assembly/design
-	 * 
-	 * @param environmentName
-	 * @param variables
+	 *
+	 * @param variableName
+	 * @param variableValue
+	 * @param isSecure
 	 * @return
 	 * @throws OneOpsClientAPIException
 	 */
@@ -1318,8 +1324,9 @@ public class Design extends APIClient {
 	/**
 	 * Update global variables for a given assembly/design
 	 * 
-	 * @param environmentName
-	 * @param variables
+	 * @param variableName
+	 * @param variableValue
+	 * @param isSecure
 	 * @return
 	 * @throws OneOpsClientAPIException
 	 */
@@ -1399,7 +1406,7 @@ public class Design extends APIClient {
 	/**
 	 * Adds specific platform from Yaml/Json file input
 	 * 
-	 * @param platformName
+	 * @param filecontent
 	 * @return
 	 * @throws OneOpsClientAPIException
 	 */

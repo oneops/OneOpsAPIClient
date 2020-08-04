@@ -179,7 +179,7 @@ public class TestCaseCommons {
 			transition.commitEnvironment(envName, null, null, false, deploymentComment);
 		}
 
-		Deployment deploy = transition.deploy(envName, null, null, false, instance.getComment());
+		Deployment deploy = transition.deploy(envName, null, null, null, false, instance.getComment());
 		Long deploymentId = deploy.getDeploymentId();
 		Long releaseId = deploy.getReleaseId();
 		transition.getDeploymentStatus(envName, deploymentId);

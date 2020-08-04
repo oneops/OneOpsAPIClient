@@ -100,11 +100,9 @@ public class Transition extends APIClient {
 	 * 
 	 * @param environmentName {mandatory}
 	 * @param envprofile if exists
-	 * @param availability {mandatory}
+	 * @param attributes {mandatory}
 	 * @param platformAvailability
 	 * @param cloudMap {mandatory}
-	 * @param debugFlag {mandatory}
-	 * @param gdnsFlag {mandatory}
 	 * @param description
 	 * @return
 	 * @throws OneOpsClientAPIException
@@ -301,7 +299,7 @@ public class Transition extends APIClient {
 	}
 
 	/**
-	 * Generate a deployment plan and start the deployment.
+	 * Generate a customized deployment plan and start the deployment.
 	 *
 	 * 1. The first Deployment API call generates a deployment plan, starts the deployment and returns
 	 * the deployment plan information.
@@ -314,13 +312,14 @@ public class Transition extends APIClient {
 	 * @return
 	 * @throws OneOpsClientAPIException
 	 */
-	public Deployment deploy(String environmentName, List<Long> excludePlatforms, List<Long> includeClouds,
+	public Deployment deploy(String environmentName, List<Long> excludePlatforms, List<Long> includeComponents, List<Long> includeClouds,
 							 boolean ignoreCloudDeploymentOrder, String comments) throws OneOpsClientAPIException {
 
 		RequestSpecification request = createRequest();
 		Map<String, String> properties = new HashMap<>();
 
 		TransitionUtil.addStringToPropertyMap(excludePlatforms, properties, "exclude_platforms");
+		TransitionUtil.addStringToPropertyMap(includeComponents, properties, "components");
 		TransitionUtil.addStringToPropertyMap(includeClouds, properties, "include_clouds");
 
 		properties.put("ignore_cloud_dpmt_order", String.valueOf(ignoreCloudDeploymentOrder));
@@ -1397,7 +1396,8 @@ public class Transition extends APIClient {
 	 * 
 	 * @param environmentName
 	 * @param platformName
-	 * @param variables
+	 * @param variableName
+	 * @param variableValue
 	 * @param isSecure
 	 * @return
 	 * @throws OneOpsClientAPIException
@@ -1510,7 +1510,8 @@ public class Transition extends APIClient {
 	 * Update global variables for a given assembly/environment
 	 * 
 	 * @param environmentName
-	 * @param variables
+	 * @param variableName
+	 * @param variableValue
 	 * @return
 	 * @throws OneOpsClientAPIException
 	 */
