@@ -338,7 +338,7 @@ public class Transition extends APIClient {
 			jsonObject.put("cms_deployment", cmsDeployment);
 		}
 
-		deployAndCheckStatus(environmentName, transitionEnvUri, request, jsonObject);
+		deployAndCheckStatus(environmentName, request, jsonObject);
 
 		return getLatestDeployment(environmentName);
 	}
@@ -1996,13 +1996,12 @@ public class Transition extends APIClient {
 	 * If the deployment has started successfully, sometimes we do get `Active deployment in progress` error
 	 * with the second API call, which can be ignored.
 	 * @param environmentName
-	 * @param transitionEnvUri
 	 * @param request
 	 * @param jsonObject
 	 * @throws OneOpsClientAPIException
 	 */
 
-	private void deployAndCheckStatus(String environmentName, String transitionEnvUri, RequestSpecification request,
+	private void deployAndCheckStatus(String environmentName, RequestSpecification request,
 											 JSONObject jsonObject) throws OneOpsClientAPIException {
 		// Start a new deployment
 		Response response = doDeploy(environmentName, transitionEnvUri, request, jsonObject);
