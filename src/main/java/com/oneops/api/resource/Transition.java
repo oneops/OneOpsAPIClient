@@ -1,18 +1,5 @@
 package com.oneops.api.resource;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
-
-import com.oneops.api.resource.model.*;
-import com.oneops.api.util.TransitionUtil;
-import org.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
@@ -25,8 +12,19 @@ import com.oneops.api.APIClient;
 import com.oneops.api.OOInstance;
 import com.oneops.api.ResourceObject;
 import com.oneops.api.exception.OneOpsClientAPIException;
+import com.oneops.api.resource.model.*;
 import com.oneops.api.util.IConstants;
 import com.oneops.api.util.JsonUtil;
+import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 
 public class Transition extends APIClient {
 	
@@ -45,7 +43,7 @@ public class Transition extends APIClient {
 		this.instance = instance;
 		transitionEnvUri = IConstants.ASSEMBLY_URI + assemblyName + IConstants.TRANSITION_URI + IConstants.ENVIRONMENT_URI;
 	}
-	
+
 	/**
 	 * Fetches specific environment details
 	 * 
@@ -230,7 +228,7 @@ public class Transition extends APIClient {
 				return response.getBody().as(Release.class);
 				
 			} else {
-				String msg = String.format("Failed to commit environment %s. %s.", environmentName, TransitionUtil.getErrorMessageFromResponse(response));
+				String msg = String.format("Failed to commit environment %s. %s.", environmentName, getErrorMessageFromResponse(response));
 				throw new OneOpsClientAPIException(msg);
 			}
 		} 
@@ -256,9 +254,9 @@ public class Transition extends APIClient {
 		StringBuilder queryString = new StringBuilder();
 		queryString.append(IConstants.DEFAULT_COMMIT_QUERY_STRING);
 
-		TransitionUtil.appendListToQueryString(excludePlatforms, queryString, "exclude_platforms");
+		appendListToQueryString(excludePlatforms, queryString, "exclude_platforms");
 
-		TransitionUtil.appendListToQueryString(includeClouds, queryString, "include_clouds");
+		appendListToQueryString(includeClouds, queryString, "include_clouds");
 
 		queryString.append("&").append("ignore_cloud_dpmt_order=").append(ignoreCloudDeploymentOrder);
 
@@ -274,8 +272,13 @@ public class Transition extends APIClient {
 				DeploymentBom body = response.getBody().as(DeploymentBom.class);
 
 				if (body.getErrors() != null) {
+					StringBuilder sb = new StringBuilder();
+					for (String error : body.getErrors()) {
+						sb.append(error).append(" ");
+					}
+					sb = sb.deleteCharAt(sb.length() - 1);
 					String msg = String.format("Failed to commit environment %s due to the following errors %s",
-							environmentName, String.join(" ", body.getErrors()));
+							environmentName, sb.toString());
 					throw new OneOpsClientAPIException(msg);
 				}
 
@@ -290,7 +293,7 @@ public class Transition extends APIClient {
 				return body.getRelease();
 
 			} else {
-				String msg = String.format("Failed to commit environment %s. %s.", environmentName, TransitionUtil.getErrorMessageFromResponse(response));
+				String msg = String.format("Failed to commit environment %s. %s.", environmentName, getErrorMessageFromResponse(response));
 				throw new OneOpsClientAPIException(msg);
 			}
 		}
@@ -318,9 +321,9 @@ public class Transition extends APIClient {
 		RequestSpecification request = createRequest();
 		Map<String, String> properties = new HashMap<>();
 
-		TransitionUtil.addStringToPropertyMap(excludePlatforms, properties, "exclude_platforms");
-		TransitionUtil.addStringToPropertyMap(includeComponents, properties, "components");
-		TransitionUtil.addStringToPropertyMap(includeClouds, properties, "include_clouds");
+		addStringToPropertyMap(excludePlatforms, properties, "exclude_platforms");
+		addStringToPropertyMap(includeComponents, properties, "components");
+		addStringToPropertyMap(includeClouds, properties, "include_clouds");
 
 		properties.put("ignore_cloud_dpmt_order", String.valueOf(ignoreCloudDeploymentOrder));
 
@@ -335,7 +338,7 @@ public class Transition extends APIClient {
 			jsonObject.put("cms_deployment", cmsDeployment);
 		}
 
-		TransitionUtil.deployAndCheckStatus(environmentName, transitionEnvUri, request, jsonObject);
+		deployAndCheckStatus(environmentName, transitionEnvUri, request, jsonObject);
 
 		return getLatestDeployment(environmentName);
 	}
@@ -372,7 +375,7 @@ public class Transition extends APIClient {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				return response.getBody().as(Deployment.class);
 			} else {
-				String msg = String.format("Failed to start deployment for environment %s. %s" , environmentName, TransitionUtil.getErrorMessageFromResponse(response));
+				String msg = String.format("Failed to start deployment for environment %s. %s" , environmentName, getErrorMessageFromResponse(response));
 				throw new OneOpsClientAPIException(msg);
 			}
 		} else {
@@ -409,7 +412,7 @@ public class Transition extends APIClient {
 				return response.getBody().as(Deployment.class);
 			} else {
 				String msg = String.format("Failed to get deployment status for environment %s with deployment Id %s. %s",
-						environmentName, deploymentId, TransitionUtil.getErrorMessageFromResponse(response));
+						environmentName, deploymentId, getErrorMessageFromResponse(response));
 				throw new OneOpsClientAPIException(msg);
 			}
 		} 
@@ -436,7 +439,7 @@ public class Transition extends APIClient {
 			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 				return response.getBody().as(Deployment.class);
 			} else {
-				String msg = String.format("Failed to get latest deployment for environment %s. %s", environmentName, TransitionUtil.getErrorMessageFromResponse(response));
+				String msg = String.format("Failed to get latest deployment for environment %s. %s", environmentName, getErrorMessageFromResponse(response));
 				throw new OneOpsClientAPIException(msg);
 			}
 		} 
@@ -468,7 +471,7 @@ public class Transition extends APIClient {
 				if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
 					return response.getBody().as(Release.class);
 				} else {
-					String msg = String.format("Failed to discard deployment plan for environment %s. %s", environmentName, TransitionUtil.getErrorMessageFromResponse(response));
+					String msg = String.format("Failed to discard deployment plan for environment %s. %s", environmentName, getErrorMessageFromResponse(response));
 					throw new OneOpsClientAPIException(msg);
 				}
 			} 
@@ -1983,5 +1986,134 @@ public class Transition extends APIClient {
 		} 
 		String msg = String.format("Failed to update relay %s for environment %s due to null response", relayName, environmentName);
 		throw new OneOpsClientAPIException(msg);
+	}
+
+	/**
+	 * 1. The first Deployment API call generates a deployment plan, starts the deployment and returns
+	 * the deployment plan information.
+	 * 2. We need a second API call to check if the deployment started successfully or if it failed due
+	 * to capacity issues (if deploy is called without committing), or any other errors.
+	 * If the deployment has started successfully, sometimes we do get `Active deployment in progress` error
+	 * with the second API call, which can be ignored.
+	 * @param environmentName
+	 * @param transitionEnvUri
+	 * @param request
+	 * @param jsonObject
+	 * @throws OneOpsClientAPIException
+	 */
+
+	private void deployAndCheckStatus(String environmentName, String transitionEnvUri, RequestSpecification request,
+											 JSONObject jsonObject) throws OneOpsClientAPIException {
+		// Start a new deployment
+		Response response = doDeploy(environmentName, transitionEnvUri, request, jsonObject);
+		checkForErrors(environmentName, response, IConstants.EXISTING_DEPLOYMENT_MESSAGE);
+
+		// Wait for 5s before checking if the deployment started successfully
+		try {
+			Thread.sleep(5000);
+		} catch(InterruptedException ie) {
+			LOG.error("Error trying to delay: {}", ie.getMessage());
+		}
+
+		// Check for capacity issues and if deployment has started or failed due to capacity error.
+		response = doDeploy(environmentName, transitionEnvUri, request, jsonObject);
+		checkForErrors(environmentName, response, null);
+	}
+
+	private Response doDeploy(String environmentName, String transitionEnvUri,
+									 RequestSpecification request, JSONObject jsonObject) throws OneOpsClientAPIException {
+
+		Response response = request.body(jsonObject.toString()).post(transitionEnvUri + environmentName + "/deployments");
+		if(response == null) {
+			String msg = String.format("Failed to start deployment for environment %s " +
+					"due to null response" ,environmentName);
+			throw new OneOpsClientAPIException(msg);
+		}
+
+		return response;
+	}
+
+	/**
+	 * Errors during commit and deploy are part of comments of the Oneops API response,
+	 * unless its a server error (status code 500).
+	 * So we need to parse the comments for errors.
+	 * As we need to call the deploy API twice
+	 * 1st call - returns status if deployment plan is generated correctly
+	 *   a. If the comment contains an error that an active deployment is in progress,
+	 *   throw an exception
+	 * 2nd call - returns one of the following -
+	 *   a. deployment plan generated successfully
+	 *   b. An error that an active deployment already in progress
+	 *   c. Error starting deployment for any reason
+	 * (a) or (b) in comments indicate the deployment has started successfully
+	 * (c) indicates there was a problem with starting the deployment
+	 * So, we should ignore the message is (a) or (b), but throw an exception if its (c)
+	 *
+	 * @param environmentName
+	 * @param response
+	 * @param checkForErrorMessage
+	 * @throws OneOpsClientAPIException
+	 */
+
+	private void checkForErrors(String environmentName, Response response, String checkForErrorMessage) throws OneOpsClientAPIException {
+		if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+			CiResource body = response.getBody().as(CiResource.class);
+			String comment = body.getComments();
+			if (comment.startsWith("ERROR:BOM:")) {
+				String[] commentParts = comment.split(":");
+
+				// When deployment API is called again to check if the deployment has started correctly
+				// ignore the active deployment error message.
+				// But if we are specifically checking for that error message, handle the error (1st Deploy API call)
+				if (commentParts[2].startsWith(IConstants.EXISTING_DEPLOYMENT_MESSAGE)
+						&& !IConstants.EXISTING_DEPLOYMENT_MESSAGE.equalsIgnoreCase(checkForErrorMessage))
+					return;
+
+				throw new OneOpsClientAPIException(comment);
+			}
+
+		} else {
+			String msg = String.format("Failed to start deployment for environment %s. %s" ,
+					environmentName, getErrorMessageFromResponse(response));
+			throw new OneOpsClientAPIException(msg);
+		}
+	}
+
+	private String getErrorMessageFromResponse(Response response) {
+		String errorMessage = "Error Status Code: " + response.getStatusCode() + ". Error: ";
+		if (response.getBody() != null) {
+			errorMessage = errorMessage + response.getBody().asString();
+		} else {
+			errorMessage = errorMessage + "n/a";
+		}
+		return errorMessage;
+	}
+
+	private void appendListToQueryString(List<Long> list, StringBuilder queryString, String queryParameter) {
+		if(list != null && list.size() > 0) {
+			StringBuilder sb = new StringBuilder();
+			for (int i = 0; i < list.size(); i++) {
+				sb.append(list.get(i));
+
+				if (i < list.size() - 1)
+					sb.append(",");
+			}
+			if (queryString.length() > 0)
+				queryString.append("&");
+			queryString.append(queryParameter).append("=").append(sb.toString());
+		}
+	}
+
+	private void addStringToPropertyMap(List<Long> list, Map<String, String> properties, String parameter) {
+		if (list != null && list.size() > 0) {
+			StringBuilder sb = new StringBuilder();
+			for (int i = 0; i < list.size(); i++) {
+				sb.append(list.get(i));
+
+				if (i < list.size() - 1)
+					sb.append(",");
+			}
+			properties.put(parameter, sb.toString());
+		}
 	}
 }
