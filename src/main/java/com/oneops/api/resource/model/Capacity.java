@@ -56,4 +56,11 @@ public class Capacity {
     public void setAdditionalProperty(String key, Object value) {
         this.additionalProperties.put(key, value);
     }
+
+    @Override
+    public String toString() {
+        return "Capacity{" +
+                "reservationCheck='" + reservationCheck + '\'' +
+                '}';
+    }
 }

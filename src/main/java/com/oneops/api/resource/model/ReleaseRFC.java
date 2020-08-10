@@ -33,4 +33,11 @@ public class ReleaseRFC {
     public void setAdditionalProperty(String key, Object value) {
         this.additionalProperties.put(key, value);
     }
+
+    @Override
+    public String toString() {
+        return "ReleaseRFC{" +
+                "cis=" + cis +
+                '}';
+    }
 }

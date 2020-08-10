@@ -68,4 +68,14 @@ public class DeploymentBom {
     public void setAdditionalProperty(String key, Object value) {
         this.additionalProperties.put(key, value);
     }
+
+    @Override
+    public String toString() {
+        return "DeploymentBom{" +
+                "rfcs=" + rfcs +
+                ", release=" + release +
+                ", capacity=" + capacity +
+                ", errors=" + errors +
+                '}';
+    }
 }
