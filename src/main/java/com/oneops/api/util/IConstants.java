@@ -22,4 +22,6 @@ public interface IConstants {
 	static String INSTANCES_URI = "/instances/";
 	static String MONITORS_URI = "/monitors/";
 	static String DEPLOYMENTS_URI = "/deployments/";
+	static String TEAMS="teams";
+	static String TEAMS_URL="/update_teams";
 }
