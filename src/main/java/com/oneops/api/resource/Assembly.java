@@ -322,7 +322,6 @@ public class Assembly extends APIClient {
 	 * @return teamList
 	 * @throws OneOpsClientAPIException
 	 */
-
 	public List<CiResource> addTeamsByAssembly(String orgName, String assemblyName, List<String> teams) throws OneOpsClientAPIException {
 		List<CiResource> teamResourceList = new ArrayList<>();
 		List<Team>inputTeamList = new ArrayList<>();
