@@ -313,12 +313,45 @@ public class Assembly extends APIClient {
 				}
 			}
 			if (!inputTeamList.isEmpty()) {
-				ciResourceList = addingTeamNameByAssembly(orgName, assemblyName, inputTeamList);
+				if (assemblyName == null || assemblyName.length() == 0) {
+					String msg = "Assembly name is mandatory to add teams to assembly";
+					throw new OneOpsClientAPIException(msg);
+				}
+				if (orgName == null || orgName.length() == 0) {
+					String msg = "Organization name is mandatory to add teams to assembly";
+					throw new OneOpsClientAPIException(msg);
+				}
+				List<Team> assemblyTeamList = listAssemblyTeams(assemblyName);
+				if (null!=assemblyTeamList && !assemblyTeamList.isEmpty()) {
+					List<String> teamsList = new ArrayList<>(assemblyTeamList.size());
+					for (Team team : assemblyTeamList) {
+						teamsList.add(team.getId());
+					}
+					if (!inputTeamList.isEmpty() && !teamsList.isEmpty()) {
+						inputTeamList.removeAll(teamsList);
+					}
+				}
+				JSONObject jsonObject = new JSONObject();
+				if (inputTeamList.size() == 0) {
+					String msg = "Teams already added to the assembly";
+					throw new OneOpsClientAPIException(msg);
+				} else {
+					jsonObject.put("add", inputTeamList);
+				}
+				RequestSpecification request = createRequest();
+				Response response = request.body(jsonObject.toString()).put(IConstants.ASSEMBLY_URI + assemblyName + "/update_teams");
+				if (response != null) {
+					if (response.getStatusCode() == 200) {
+						ciResourceList= JsonUtil.toObject(response.getBody().asString(), new TypeReference<List<CiResource>>(){});
+					} else {
+						String msg = String.format("Failed to add teams with name %s due to %s", assemblyName, response.getStatusLine());
+						throw new OneOpsClientAPIException(msg);
+					}
+				}
 			}
 		}
 		return ciResourceList;
 	}
-
 	/**
 	 * List of teams for the given organization
 	 *
@@ -343,53 +376,6 @@ public class Assembly extends APIClient {
 		}
 		String msg = String.format("Failed to get team list for organization with name %s due to null response", orgName);
 		throw new OneOpsClientAPIException(msg);
-	}
-	/**
-	 * Adding Team Name By Assembly
-	 *
-	 * @param orgName {mandatory}
-	 * @param assemblyName {mandatory}
-	 * @param inputTeamList {mandatory}
-	 * @return
-	 * @throws OneOpsClientAPIException
-	 */
-	public List<CiResource> addingTeamNameByAssembly(String orgName, String assemblyName, List<String> inputTeamList) throws OneOpsClientAPIException {
-		if (assemblyName == null || assemblyName.length() == 0) {
-			String msg = "Missing assembly name to create teams for assembly";
-			throw new OneOpsClientAPIException(msg);
-		}
-		if (orgName == null || orgName.length() == 0) {
-			String msg = "Missing Organization name to create teams for Organization";
-			throw new OneOpsClientAPIException(msg);
-		}
-		List<Team> assemblyTeamList = listAssemblyTeams(assemblyName);
-		if (null!=assemblyTeamList && !assemblyTeamList.isEmpty()) {
-			List<String> teamsList = new ArrayList<>(assemblyTeamList.size());
-			for (Team team : assemblyTeamList) {
-				teamsList.add(team.getId());
-			}
-			if ((null!=inputTeamList && !inputTeamList.isEmpty()) && !teamsList.isEmpty()) {
-				inputTeamList.removeAll(teamsList);
-			}
-		}
-		JSONObject jsonObject = new JSONObject();
-		if (inputTeamList != null && inputTeamList.size() == 0) {
-			String msg = "Given team name is already exists";
-			throw new OneOpsClientAPIException(msg);
-		} else {
-			jsonObject.put("add", inputTeamList);
-		}
-		RequestSpecification request = createRequest();
-		Response response = request.body(jsonObject.toString()).put(IConstants.ASSEMBLY_URI + assemblyName + "/update_teams");
-		if (response != null) {
-			if (response.getStatusCode() == 200) {
-				return JsonUtil.toObject(response.getBody().asString(), new TypeReference<List<CiResource>>(){});
-			} else {
-				String msg = String.format("Failed to add teams with name %s due to %s", assemblyName, response.getStatusLine());
-				throw new OneOpsClientAPIException(msg);
-			}
-		}
-		return null;
 	}
 	/**
 	 * List teams for the given assembly
