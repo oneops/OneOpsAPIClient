@@ -1,5 +1,6 @@
 package com.oneops.api.resource;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,34 +52,6 @@ public class Assembly extends APIClient {
 		String msg = String.format("Failed to get assembly with name %s due to null response", assemblyName);
 		throw new OneOpsClientAPIException(msg);
 	}
-	
-	/**
-	 * List teams for the given assembly
-	 * 
-	 * @param assemblyName
-	 * @return
-	 * @throws OneOpsClientAPIException
-	 */
-	public List<Team> listAssemblyTeams(String assemblyName) throws OneOpsClientAPIException {
-		if(assemblyName == null || assemblyName.length() == 0) {
-			String msg = "Missing assembly name to fetch details";
-			throw new OneOpsClientAPIException(msg);
-		}
-		
-		RequestSpecification request = createRequest();
-		Response response = request.get(IConstants.ASSEMBLY_URI + assemblyName + "/teams");
-		if(response != null) {
-			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
-				return JsonUtil.toObject(response.getBody().asString(), new TypeReference<List<Team>>(){});
-			} else {
-				String msg = String.format("Failed to get assembly team list with name %s due to %s", assemblyName, response.getStatusLine());
-				throw new OneOpsClientAPIException(msg);
-			}
-		} 
-		String msg = String.format("Failed to get assembly team list with name %s due to null response", assemblyName);
-		throw new OneOpsClientAPIException(msg);
-	}
-	
 	/**
 	 * Lists all the assemblies
 	 * 
@@ -89,7 +62,7 @@ public class Assembly extends APIClient {
 		RequestSpecification request = createRequest();
 		Response response = request.get(IConstants.ASSEMBLY_URI);
 		if(response != null) {
-			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+			if(response.getStatusCode() == 200) {
 				return JsonUtil.toObject(response.getBody().asString(), new TypeReference<List<CiResource>>(){});
 			} else {
 				String msg = String.format("Failed to get list of assemblies due to %s", response.getStatusLine());
@@ -310,6 +283,138 @@ public class Assembly extends APIClient {
 			}
 		} 
 		String msg = String.format("Failed to delete assembly with name %s due to null response", assemblyName);
+		throw new OneOpsClientAPIException(msg);
+	}
+
+
+	/**
+	 * AddTeams for the given assembly
+	 *
+	 * @param orgName      {mandatory}
+	 * @param assemblyName {mandatory}
+	 * @param teams        {mandatory}
+	 * @return teamList
+	 * @throws OneOpsClientAPIException
+	 */
+	public List<CiResource> addTeamsByAssembly(String orgName, String assemblyName, List<String> teams) throws OneOpsClientAPIException {
+		List<CiResource> ciResourceList = null;
+		if (null!= teams && !teams.isEmpty()) {
+			List<Team> orgTeamList = listOrganizationTeams(orgName);
+			List<String> inputTeamList = new ArrayList<>();
+			Map<String, Object> orgTeamMap = new HashMap<>();
+			if (null != orgTeamList && !orgTeamList.isEmpty()) {
+				for (Team team : orgTeamList) {
+					orgTeamMap.put(team.getName(), team.getId());
+				}
+			}
+			for (String teamName : orgTeamMap.keySet()) {
+				if (teams.contains(teamName)) {
+					inputTeamList.add(String.valueOf(orgTeamMap.get(teamName)));
+				}
+			}
+			if (!inputTeamList.isEmpty()) {
+				ciResourceList = addingTeamNameByAssembly(orgName, assemblyName, inputTeamList);
+			}
+		}
+		return ciResourceList;
+	}
+
+	/**
+	 * List of teams for the given organization
+	 *
+	 * @param orgName {mandatory}
+	 * @return
+	 * @throws OneOpsClientAPIException
+	 */
+	public List<Team> listOrganizationTeams(String orgName) throws OneOpsClientAPIException {
+		if(orgName == null || orgName.length() == 0) {
+			String msg = "Missing organization name to fetch details";
+			throw new OneOpsClientAPIException(msg);
+		}
+		RequestSpecification request = createRequest();
+		Response response = request.get(IConstants.ORGANIZATION_URI + "teams");
+		if(response != null) {
+			if(response.getStatusCode() == 200) {
+				return JsonUtil.toObject(response.getBody().asString(), new TypeReference<List<Team>>(){});
+			} else {
+				String msg = String.format("Failed to get team list for organization with name %s due to %s", orgName, response.getStatusLine());
+				throw new OneOpsClientAPIException(msg);
+			}
+		}
+		String msg = String.format("Failed to get team list for organization with name %s due to null response", orgName);
+		throw new OneOpsClientAPIException(msg);
+	}
+	/**
+	 * Adding Team Name By Assembly
+	 *
+	 * @param orgName {mandatory}
+	 * @param assemblyName {mandatory}
+	 * @param inputTeamList {mandatory}
+	 * @return
+	 * @throws OneOpsClientAPIException
+	 */
+	public List<CiResource> addingTeamNameByAssembly(String orgName, String assemblyName, List<String> inputTeamList) throws OneOpsClientAPIException {
+		if (assemblyName == null || assemblyName.length() == 0) {
+			String msg = "Missing assembly name to create teams for assembly";
+			throw new OneOpsClientAPIException(msg);
+		}
+		if (orgName == null || orgName.length() == 0) {
+			String msg = "Missing Organization name to create teams for Organization";
+			throw new OneOpsClientAPIException(msg);
+		}
+		List<Team> assemblyTeamList = listAssemblyTeams(assemblyName);
+		if (null!=assemblyTeamList && !assemblyTeamList.isEmpty()) {
+			List<String> teamsList = new ArrayList<>(assemblyTeamList.size());
+			for (Team team : assemblyTeamList) {
+				teamsList.add(team.getId());
+			}
+			if ((null!=inputTeamList && !inputTeamList.isEmpty()) && !teamsList.isEmpty()) {
+				inputTeamList.removeAll(teamsList);
+			}
+		}
+		JSONObject jsonObject = new JSONObject();
+		if (inputTeamList != null && inputTeamList.size() == 0) {
+			String msg = "Given team name is already exists";
+			throw new OneOpsClientAPIException(msg);
+		} else {
+			jsonObject.put("add", inputTeamList);
+		}
+		RequestSpecification request = createRequest();
+		Response response = request.body(jsonObject.toString()).put(IConstants.ASSEMBLY_URI + assemblyName + "/update_teams");
+		if (response != null) {
+			if (response.getStatusCode() == 200) {
+				return JsonUtil.toObject(response.getBody().asString(), new TypeReference<List<CiResource>>(){});
+			} else {
+				String msg = String.format("Failed to add teams with name %s due to %s", assemblyName, response.getStatusLine());
+				throw new OneOpsClientAPIException(msg);
+			}
+		}
+		return null;
+	}
+	/**
+	 * List teams for the given assembly
+	 *
+	 * @param assemblyName
+	 * @return
+	 * @throws OneOpsClientAPIException
+	 */
+	public List<Team> listAssemblyTeams(String assemblyName) throws OneOpsClientAPIException {
+		if (assemblyName == null || assemblyName.length() == 0) {
+			String msg = "Missing assembly name to fetch details";
+			throw new OneOpsClientAPIException(msg);
+		}
+		RequestSpecification request = createRequest();
+		Response response = request.get(IConstants.ASSEMBLY_URI + assemblyName + "/teams");
+		if (response != null) {
+			if (response.getStatusCode() == 200) {
+				return JsonUtil.toObject(response.getBody().asString(), new TypeReference<List<Team>>() {
+				});
+			} else {
+				String msg = String.format("Failed to get assembly team list with name %s due to %s", assemblyName, response.getStatusLine());
+				throw new OneOpsClientAPIException(msg);
+			}
+		}
+		String msg = String.format("Failed to get assembly team list with name %s due to null response", assemblyName);
 		throw new OneOpsClientAPIException(msg);
 	}
 }
