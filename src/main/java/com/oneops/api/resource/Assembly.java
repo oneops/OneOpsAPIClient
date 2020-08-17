@@ -299,6 +299,14 @@ public class Assembly extends APIClient {
 	public List<CiResource> addTeamsByAssembly(String orgName, String assemblyName, List<String> teams) throws OneOpsClientAPIException {
 		List<CiResource> ciResourceList = null;
 		if (null!= teams && !teams.isEmpty()) {
+			if (assemblyName == null || assemblyName.length() == 0) {
+				String msg = "Assembly name is mandatory to add teams to assembly";
+				throw new OneOpsClientAPIException(msg);
+			}
+			if (orgName == null || orgName.length() == 0) {
+				String msg = "Organization name is mandatory to add teams to assembly";
+				throw new OneOpsClientAPIException(msg);
+			}
 			List<Team> orgTeamList = listOrganizationTeams(orgName);
 			List<String> inputTeamList = new ArrayList<>();
 			Map<String, Object> orgTeamMap = new HashMap<>();
@@ -313,14 +321,6 @@ public class Assembly extends APIClient {
 				}
 			}
 			if (!inputTeamList.isEmpty()) {
-				if (assemblyName == null || assemblyName.length() == 0) {
-					String msg = "Assembly name is mandatory to add teams to assembly";
-					throw new OneOpsClientAPIException(msg);
-				}
-				if (orgName == null || orgName.length() == 0) {
-					String msg = "Organization name is mandatory to add teams to assembly";
-					throw new OneOpsClientAPIException(msg);
-				}
 				List<Team> assemblyTeamList = listAssemblyTeams(assemblyName);
 				if (null!=assemblyTeamList && !assemblyTeamList.isEmpty()) {
 					List<String> teamsList = new ArrayList<>(assemblyTeamList.size());
