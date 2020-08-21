@@ -52,8 +52,8 @@
   </dependencies>
 
   <scm>
-    <developerConnection>scm:git:git@github.com:oneops/oneops-api.git</developerConnection>
-    <url>https://github.com/oneops/oneops-client</url>
+    <developerConnection>scm:git:git@github.com:oneops/OneOpsAPIClient.git</developerConnection>
+    <url>https://github.com/oneops/OneOpsAPIClient</url>
     <tag>HEAD</tag>
   </scm>
 
