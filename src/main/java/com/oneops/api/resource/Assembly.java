@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -85,7 +86,7 @@ public class Assembly extends APIClient {
 	 * @throws OneOpsClientAPIException
 	 */
 	public CiResource createAssembly(String assemblyName, String ownerEmail, String comments, String description) throws OneOpsClientAPIException {
-		return createAssembly(assemblyName, ownerEmail, comments, description, null);
+		return createAssembly(assemblyName, ownerEmail, comments, description, null, null);
 	}
 	
 	/**
@@ -96,10 +97,11 @@ public class Assembly extends APIClient {
 	 * @param comments
 	 * @param description
 	 * @param tags
+	 * @param marketSite
 	 * @return
 	 * @throws OneOpsClientAPIException
 	 */
-	public CiResource createAssembly(String assemblyName, String ownerEmail, String comments, String description, Map<String, String> tags) throws OneOpsClientAPIException {
+	public CiResource createAssembly(String assemblyName, String ownerEmail, String comments, String description, Map<String, String> tags, List<String> marketSite) throws OneOpsClientAPIException {
 		ResourceObject ro = new ResourceObject();
 		Map<String ,String> attributes = new HashMap<String ,String>();
 		Map<String ,String> properties= new HashMap<String ,String>();
@@ -126,9 +128,13 @@ public class Assembly extends APIClient {
 		if( tags != null && !tags.isEmpty() ){
 			attributes.put("tags", JSONObject.valueToString(tags));
 		}
-		
+
+		if (marketSite != null && !marketSite.isEmpty()){
+			attributes.put("site", StringUtils.join(marketSite, ","));
+		}
+
 		ro.setAttributes(attributes);
-		
+
 		RequestSpecification request = createRequest();
 		JSONObject jsonObject = JsonUtil.createJsonObject(ro , "cms_ci");
 
@@ -146,66 +152,6 @@ public class Assembly extends APIClient {
 		throw new OneOpsClientAPIException(msg);
 	}
 
-	/**
-	 * Creates assembly for the given @assemblyName
-	 *
-	 * @param assemblyName {mandatory}
-	 * @param ownerEmail a valid email address is {mandatory}
-	 * @param comments
-	 * @param description
-	 * @param tags
-	 * @param marketSite
-	 * @return
-	 * @throws OneOpsClientAPIException
-	 */
-	public CiResource createAssembly(String assemblyName, String ownerEmail, String comments, String description, Map<String, String> tags, String marketSite) throws OneOpsClientAPIException {
-		ResourceObject ro = new ResourceObject();
-		Map<String ,String> attributes = new HashMap<String ,String>();
-		Map<String ,String> properties= new HashMap<String ,String>();
-
-		if(assemblyName != null && assemblyName.length() > 0) {
-			properties.put("ciName", assemblyName);
-		} else {
-			String msg = "Missing assembly name to create one";
-			throw new OneOpsClientAPIException(msg);
-		}
-
-		properties.put("comments", comments);
-		ro.setProperties(properties);
-
-		if(ownerEmail != null && ownerEmail.length() > 0) {
-			attributes.put("owner", ownerEmail);
-		} else {
-			String msg = "Missing assembly owner email address";
-			throw new OneOpsClientAPIException(msg);
-		}
-
-		attributes.put("description", description);
-
-		if( tags != null && !tags.isEmpty() ){
-			attributes.put("tags", JSONObject.valueToString(tags));
-		}
-		if (marketSite != null && !marketSite.isEmpty()){
-			attributes.put("site", marketSite);
-		}
-		ro.setAttributes(attributes);
-		RequestSpecification request = createRequest();
-		JSONObject jsonObject = JsonUtil.createJsonObject(ro , "cms_ci");
-		Response response = request.body(jsonObject.toString()).post(IConstants.ASSEMBLY_URI);
-
-		if(response != null) {
-			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
-				return response.getBody().as(CiResource.class);
-			} else {
-				String msg = String.format("Failed to create assembly with name %s due to %s", assemblyName, response.getStatusLine());
-				throw new OneOpsClientAPIException(msg);
-			}
-		}
-		String msg = String.format("Failed to create assembly with name %s due to null response", assemblyName);
-		throw new OneOpsClientAPIException(msg);
-	}
-
-	
 	/**
 	 * Clones assembly @toAssembly from a given @fromAssembly
 	 * 
@@ -268,10 +214,11 @@ public class Assembly extends APIClient {
 	 * @param ownerEmail a valid email address is {mandatory}
 	 * @param description
 	 * @param tags
+	 * @param marketSite
 	 * @return
 	 * @throws OneOpsClientAPIException
 	 */
-	public CiResource updateAssembly(String assemblyName, String ownerEmail, String description, Map<String, String> tags) throws OneOpsClientAPIException {
+	public CiResource updateAssembly(String assemblyName, String ownerEmail, String description, Map<String, String> tags, List<String> marketSite) throws OneOpsClientAPIException {
 		ResourceObject ro = new ResourceObject();
 		Map<String ,String> attributes = new HashMap<String ,String>();
 		Map<String ,String> properties= new HashMap<String ,String>();
@@ -298,6 +245,10 @@ public class Assembly extends APIClient {
 		
 		if( tags != null && !tags.isEmpty() ){
 			attributes.put("tags", JSONObject.valueToString(tags));
+		}
+
+		if (marketSite != null && !marketSite.isEmpty()){
+			attributes.put("site", StringUtils.join(marketSite, ","));
 		}
 		
 		ro.setAttributes(attributes);
@@ -319,67 +270,6 @@ public class Assembly extends APIClient {
 		throw new OneOpsClientAPIException(msg);
 	}
 
-	/**
-	 * Updates assembly for the given @assemblyName
-	 *
-	 * @param assemblyName {mandatory}
-	 * @param ownerEmail a valid email address is {mandatory}
-	 * @param description
-	 * @param tags
-	 * @param marketSite
-	 * @return
-	 * @throws OneOpsClientAPIException
-	 */
-	public CiResource updateAssembly(String assemblyName, String ownerEmail, String description, Map<String, String> tags, String marketSite) throws OneOpsClientAPIException {
-		ResourceObject ro = new ResourceObject();
-		Map<String ,String> attributes = new HashMap<String ,String>();
-		Map<String ,String> properties= new HashMap<String ,String>();
-
-		if(assemblyName != null && assemblyName.length() > 0) {
-			properties.put("ciName", assemblyName);
-		} else {
-			String msg = "Missing assembly name to update one";
-			throw new OneOpsClientAPIException(msg);
-		}
-
-		CiResource assembly = getAssembly(assemblyName);
-
-		properties.put("ciId", String.valueOf(assembly.getCiId()));
-		ro.setProperties(properties);
-
-		if(ownerEmail != null && ownerEmail.length() > 0) {
-			attributes.put("owner", ownerEmail);
-		}
-
-		if(description != null && description.length() > 0) {
-			attributes.put("description", description);
-		}
-
-		if( tags != null && !tags.isEmpty() ){
-			attributes.put("tags", JSONObject.valueToString(tags));
-		}
-		if (marketSite != null && !marketSite.isEmpty()){
-			attributes.put("site", marketSite);
-		}
-		ro.setAttributes(attributes);
-
-		RequestSpecification request = createRequest();
-		JSONObject jsonObject = JsonUtil.createJsonObject(ro , "cms_ci");
-
-		Response response = request.body(jsonObject.toString()).put(IConstants.ASSEMBLY_URI + assemblyName);
-
-		if(response != null) {
-			if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
-				return response.getBody().as(CiResource.class);
-			} else {
-				String msg = String.format("Failed to update assembly with name %s due to %s", assemblyName, response.getStatusLine());
-				throw new OneOpsClientAPIException(msg);
-			}
-		}
-		String msg = String.format("Failed to update assembly with name %s due to null response", assemblyName);
-		throw new OneOpsClientAPIException(msg);
-	}
-	
 	/**
 	 * Deletes the given assembly
 	 * 
