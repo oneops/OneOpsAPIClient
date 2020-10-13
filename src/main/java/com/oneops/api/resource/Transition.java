@@ -302,12 +302,12 @@ public class Transition extends APIClient {
 	 * Generate a customized deployment plan and start the deployment.
 	 *
 	 * 1. The first Deployment API call generates a deployment plan, starts the deployment and returns
-	 * the deployment plan information.
-	 * 2. When CI state becomes "default", the deployment has been initiated/failed.
-	 * Check the environment API till CI state changes from "locked" to "default"
+	 * the environment information.
+	 * 2. Check the environment API till CI state changes from "locked" to "default".
+	 * When CI state becomes "default", the deployment has been initiated/failed.
 	 * 3. Check the message of the latest deployment and if that matches the comments provided to the method call.
 	 * 4. If the comments match return the latest deployment object
-	 * 5. If it does not match, that means the deployment was not successfully initiated. 
+	 * 5. If it does not match, that means the deployment was not successfully initiated.
 	 * 		a. Check for `comments` of the environment to see if there was any ERROR.
 	 * 		Throw `OneOpsClientAPIException` with the message.
 	 * 	 	b. If there are no errors in `comments` of the environment, throw `OneOpsClientAPIException`
