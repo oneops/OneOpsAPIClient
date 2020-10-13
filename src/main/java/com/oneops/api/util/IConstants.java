@@ -24,6 +24,8 @@ public interface IConstants {
 	static String DEPLOYMENTS_URI = "/deployments/";
 
 	static String DEFAULT_COMMIT_QUERY_STRING = "commit=true&capacity=true";
-	static String DEFAULT_CAPACITY_QUERY_STRING = "capacity=true";
-	static String EXISTING_DEPLOYMENT_MESSAGE = "There is an active deployment";
+	static String DEFAULT_ERROR_COMMENT_PREFIX = "ERROR:BOM:";
+	static String DEFAULT_CI_STATE = "default";
+	static String DEFAULT_ERROR_MESSAGE = "Unable to start deployment for environment %s." +
+			"Please check OneOps UI for the exact reason.";
 }

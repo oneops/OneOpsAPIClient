@@ -19,10 +19,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
@@ -247,7 +244,7 @@ public class Transition extends APIClient {
 	 * @return
 	 * @throws OneOpsClientAPIException
 	 */
-	public Release commitEnvironment(String environmentName, List<Long> excludePlatforms, List<Long> includeClouds,
+	public DeploymentBom commitEnvironment(String environmentName, List<Long> excludePlatforms, List<Long> includeClouds,
 									 boolean ignoreCloudDeploymentOrder, String comment) throws OneOpsClientAPIException {
 
 		RequestSpecification request = createRequest();
@@ -290,7 +287,7 @@ public class Transition extends APIClient {
 					throw new OneOpsClientAPIException(msg);
 				}
 
-				return body.getRelease();
+				return body;
 
 			} else {
 				String msg = String.format("Failed to commit environment %s. %s.", environmentName, getErrorMessageFromResponse(response));
@@ -306,10 +303,15 @@ public class Transition extends APIClient {
 	 *
 	 * 1. The first Deployment API call generates a deployment plan, starts the deployment and returns
 	 * the deployment plan information.
-	 * 2. We need a second API call to check if the deployment started successfully or if it failed due
-	 * to capacity issues (if deploy is called without committing), or any other errors.
-	 * If the deployment has started successfully, sometimes we do get `Active deployment in progress` error
-	 * with the second API call, which can be ignored.
+	 * 2. When CI state becomes "default", the deployment has been initiated/failed.
+	 * Check the environment API till CI state changes from "locked" to "default"
+	 * 3. Check the message of the latest deployment and if that matches the comments provided to the method call.
+	 * 4. If the comments match return the latest deployment object
+	 * 5. If it does not match, that means the deployment was not successfully initiated. 
+	 * 		a. Check for `comments` of the environment to see if there was any ERROR.
+	 * 		Throw `OneOpsClientAPIException` with the message.
+	 * 	 	b. If there are no errors in `comments` of the environment, throw `OneOpsClientAPIException`
+	 * 	  	with DEFAULT_ERROR_MESSAGE.
 	 *
 	 * @param environmentName
 	 * @return
@@ -332,15 +334,38 @@ public class Transition extends APIClient {
 
 		JSONObject jsonObject = JsonUtil.createJsonObject(ro, null);
 
-		if (comments != null) {
-			Map<String, String> cmsDeployment = new HashMap<>();
-			cmsDeployment.put("comments", comments);
-			jsonObject.put("cms_deployment", cmsDeployment);
+		if (comments == null)
+			comments = String.format("Deployment for %s environment identified by: %s",
+					environmentName, UUID.randomUUID().toString());
+
+		Map<String, String> cmsDeployment = new HashMap<>();
+		cmsDeployment.put("comments", comments);
+		jsonObject.put("cms_deployment", cmsDeployment);
+
+		// Start a new deployment
+		CiResource envInfo = doDeploy(environmentName, transitionEnvUri, request, jsonObject);
+
+		while (!IConstants.DEFAULT_CI_STATE.equalsIgnoreCase(envInfo.getCiState())) {
+			LOG.info("Deployment initiation in progress ...");
+			try {
+				Thread.sleep(5000);
+			} catch(InterruptedException ie) {
+				LOG.error("Error waiting for deployment to start: {}", ie.getMessage());
+			}
+			envInfo = getEnvironment(environmentName);
 		}
 
-		deployAndCheckStatus(environmentName, request, jsonObject);
+		Deployment latestDeployment = getLatestDeployment(environmentName);
 
-		return getLatestDeployment(environmentName);
+		if (!comments.equalsIgnoreCase(latestDeployment.getComments())) {
+			String envComments = envInfo.getComments();
+
+			if (!envComments.startsWith(IConstants.DEFAULT_ERROR_COMMENT_PREFIX))
+				envComments = String.format(IConstants.DEFAULT_ERROR_MESSAGE, environmentName);
+			throw new OneOpsClientAPIException(envComments);
+		}
+
+		return latestDeployment;
 	}
 
 	/**
@@ -382,11 +407,8 @@ public class Transition extends APIClient {
 			String msg = String.format("Failed to find release id to be deployed for environment %s", environmentName);
 			throw new OneOpsClientAPIException(msg);
 		}
-				
-			
 	}
-	
-	
+
 	/**
 	 * Fetches deployment status for the given assembly/environment
 	 * 
@@ -1988,89 +2010,16 @@ public class Transition extends APIClient {
 		throw new OneOpsClientAPIException(msg);
 	}
 
-	/**
-	 * 1. The first Deployment API call generates a deployment plan, starts the deployment and returns
-	 * the deployment plan information.
-	 * 2. We need a second API call to check if the deployment started successfully or if it failed due
-	 * to capacity issues (if deploy is called without committing), or any other errors.
-	 * If the deployment has started successfully, sometimes we do get `Active deployment in progress` error
-	 * with the second API call, which can be ignored.
-	 * @param environmentName
-	 * @param request
-	 * @param jsonObject
-	 * @throws OneOpsClientAPIException
-	 */
-
-	private void deployAndCheckStatus(String environmentName, RequestSpecification request,
-											 JSONObject jsonObject) throws OneOpsClientAPIException {
-		// Start a new deployment
-		Response response = doDeploy(environmentName, transitionEnvUri, request, jsonObject);
-		checkForErrors(environmentName, response, IConstants.EXISTING_DEPLOYMENT_MESSAGE);
-
-		// Wait for 5s before checking if the deployment started successfully
-		try {
-			Thread.sleep(5000);
-		} catch(InterruptedException ie) {
-			LOG.error("Error trying to delay: {}", ie.getMessage());
-		}
-
-		// Check for capacity issues and if deployment has started or failed due to capacity error.
-		response = doDeploy(environmentName, transitionEnvUri, request, jsonObject);
-		checkForErrors(environmentName, response, null);
-	}
-
-	private Response doDeploy(String environmentName, String transitionEnvUri,
-									 RequestSpecification request, JSONObject jsonObject) throws OneOpsClientAPIException {
+	private CiResource doDeploy(String environmentName, String transitionEnvUri,
+								RequestSpecification request, JSONObject jsonObject) throws OneOpsClientAPIException {
 
 		Response response = request.body(jsonObject.toString()).post(transitionEnvUri + environmentName + "/deployments");
 		if(response == null) {
 			String msg = String.format("Failed to start deployment for environment %s " +
 					"due to null response" ,environmentName);
 			throw new OneOpsClientAPIException(msg);
-		}
-
-		return response;
-	}
-
-	/**
-	 * Errors during commit and deploy are part of comments of the Oneops API response,
-	 * unless its a server error (status code 500).
-	 * So we need to parse the comments for errors.
-	 * As we need to call the deploy API twice
-	 * 1st call - returns status if deployment plan is generated correctly
-	 *   a. If the comment contains an error that an active deployment is in progress,
-	 *   throw an exception
-	 * 2nd call - returns one of the following -
-	 *   a. deployment plan generated successfully
-	 *   b. An error that an active deployment already in progress
-	 *   c. Error starting deployment for any reason
-	 * (a) or (b) in comments indicate the deployment has started successfully
-	 * (c) indicates there was a problem with starting the deployment
-	 * So, we should ignore the message is (a) or (b), but throw an exception if its (c)
-	 *
-	 * @param environmentName
-	 * @param response
-	 * @param checkForErrorMessage
-	 * @throws OneOpsClientAPIException
-	 */
-
-	private void checkForErrors(String environmentName, Response response, String checkForErrorMessage) throws OneOpsClientAPIException {
-		if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
-			CiResource body = response.getBody().as(CiResource.class);
-			String comment = body.getComments();
-			if (comment.startsWith("ERROR:BOM:")) {
-				String[] commentParts = comment.split(":");
-
-				// When deployment API is called again to check if the deployment has started correctly
-				// ignore the active deployment error message.
-				// But if we are specifically checking for that error message, handle the error (1st Deploy API call)
-				if (commentParts[2].startsWith(IConstants.EXISTING_DEPLOYMENT_MESSAGE)
-						&& !IConstants.EXISTING_DEPLOYMENT_MESSAGE.equalsIgnoreCase(checkForErrorMessage))
-					return;
-
-				throw new OneOpsClientAPIException(comment);
-			}
-
+		} else if(response.getStatusCode() == 200 || response.getStatusCode() == 302) {
+			return response.as(CiResource.class);
 		} else {
 			String msg = String.format("Failed to start deployment for environment %s. %s" ,
 					environmentName, getErrorMessageFromResponse(response));
